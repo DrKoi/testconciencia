@@ -4,18 +4,104 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{ page.title | default: site.title }}</title>
-  </head>
+  <meta name="description" content="{{ site.description }}">
+  <style>
+    :root {
+      --bg: #0B0F19;
+      --card: #131B2E;
+      --text: #F3F4F6;
+      --text-muted: #9CA3AF;
+      --accent: #38BDF8;
+      --kiwi: #84CC16;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: rgba(19, 27, 46, 0.8);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding: 1rem 1.5rem;
+    }
+    header .container {
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header a.brand {
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 800;
+      font-size: 1.2rem;
+    }
+    header nav a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      margin-left: 1.2rem;
+      font-weight: 600;
+      transition: color 0.2s;
+    }
+    header nav a:hover { color: var(--accent); }
+    main {
+      flex: 1;
+      max-width: 900px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem;
+    }
+    h1 { font-size: 2.2rem; margin-bottom: 1rem; color: #fff; }
+    h2, h3 { margin: 1.8rem 0 0.8rem 0; color: #E5E7EB; }
+    p { margin-bottom: 1.2rem; color: var(--text-muted); font-size: 1.05rem; }
+    blockquote {
+      border-left: 4px solid var(--accent);
+      padding: 0.8rem 1.2rem;
+      background: var(--card);
+      border-radius: 6px;
+      margin: 1.5rem 0;
+      color: #E2E8F0;
+    }
+    hr { border: 0; height: 1px; background: rgba(255,255,255,0.1); margin: 2rem 0; }
+    ul { padding-left: 1.5rem; margin-bottom: 1.5rem; color: var(--text-muted); }
+    li { margin-bottom: 0.6rem; }
+    a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    a:hover { text-decoration: underline; }
+    footer {
+      border-top: 1px solid rgba(255,255,255,0.08);
+      padding: 2rem 1.5rem;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      background: #080C14;
+    }
+  </style>
+</head>
 <body>
   <header>
-    <h1><a href="{{ "/" | relative_url }}">{{ site.title }}</a></h1>
-    </header>
+    <div class="container">
+      <a href="{{ "/" | relative_url }}" class="brand">🌐 {{ site.title }}</a>
+      <nav>
+        <a href="{{ "/" | relative_url }}">Inicio</a>
+        <a href="{{ "/kiwikos-lab/" | relative_url }}" style="color: var(--kiwi);">🥝 Kiwiko's Lab</a>
+      </nav>
+    </div>
+  </header>
 
   <main>
     {{ content }}
   </main>
 
   <footer>
-    <p>&copy; {{ 'now' | date: "%Y" }} {{ site.title }}. {{ site.description }}</p>
+    <p>&copy; {{ 'now' | date: "%Y" }} {{ site.title }} • {{ site.description }}</p>
   </footer>
 </body>
 </html>
