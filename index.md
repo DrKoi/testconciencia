@@ -14,7 +14,7 @@ Bienvenido al portal central del ecosistema **TestConCiencia**. Aquí convergen 
 
 * 🥝 **[Kiwiko's Lab (Gaming Ético y Lógico)]({{ "/kiwikos-lab/" | relative_url }})**  
   Laboratorio de videojuegos lógicos independientes donde el azar no decide la partida. Creadores de **Atomic Mines** y **Atomic Sudoku**.  
-  👉 [Visitar Kiwiko's Lab]({{ "/kiwikos-lab/" | relative_url }}) | [Política de Privacidad de Atomic Mines]({{ "/kiwikos-lab/atomic-mines/privacy.html" | relative_url }})
+  👉 [Portal Kiwiko's Lab]({{ "/kiwikos-lab/" | relative_url }}) | [Privacidad Atomic Mines]({{ "/kiwikos-lab/atomic-mines/privacy.html" | relative_url }}) | [Privacidad Atomic Sudoku]({{ "/kiwikos-lab/atomic-sudoku/privacy.html" | relative_url }})
 
 ---
 
