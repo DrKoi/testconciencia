@@ -23,4 +23,10 @@ Bienvenido al portal central del ecosistema **TestConCiencia**. Aquí convergen 
 
 ---
 
+### 🛠️ Herramientas
+
+* 🎧 **[Conversor de WAV a MP3]({{ "/herramientas/wav-a-mp3/" | relative_url }})** — Convierte audio `.wav` a `.mp3` sin salir del navegador. Nada se sube a Internet: todo el procesamiento es local.
+
+---
+
 *Desarrollado y mantenido por [DrKoi](https://github.com/DrKoi).*

@@ -1,0 +1,294 @@
+---
+layout: default
+title: Conversor WAV a MP3 — TestConCiencia
+---
+
+<h1>🎧 Conversor de WAV a MP3</h1>
+
+<blockquote>
+  Convierte tus archivos <strong>.wav</strong> a <strong>.mp3</strong> directamente en tu navegador.
+  Ningún archivo se sube a Internet: todo el procesamiento ocurre en tu equipo.
+</blockquote>
+
+<div class="c2m">
+  <div id="drop" class="c2m-drop" tabindex="0" role="button" aria-label="Seleccionar archivos WAV">
+    <input id="file" type="file" accept=".wav,audio/wav,audio/x-wav,audio/wave" multiple hidden>
+    <div class="c2m-drop-inner">
+      <span class="c2m-drop-icon">⬆️</span>
+      <p><strong>Arrastra aquí tus archivos WAV</strong><br>o haz clic para elegirlos</p>
+    </div>
+  </div>
+
+  <div class="c2m-options">
+    <label>
+      Calidad (bitrate)
+      <select id="bitrate">
+        <option value="128">128 kbps — ligero</option>
+        <option value="192" selected>192 kbps — recomendado</option>
+        <option value="256">256 kbps — alta</option>
+        <option value="320">320 kbps — máxima</option>
+      </select>
+    </label>
+    <label>
+      Canales
+      <select id="channels">
+        <option value="keep" selected>Conservar original</option>
+        <option value="2">Estéreo</option>
+        <option value="1">Mono</option>
+      </select>
+    </label>
+  </div>
+
+  <ul id="list" class="c2m-list" hidden></ul>
+
+  <p id="support-warn" class="c2m-warn" hidden>
+    ⚠️ Tu navegador no permite ejecutar Web Workers desde archivos locales.
+    Usa la versión publicada en el sitio o un navegador moderno.
+  </p>
+</div>
+
+<h2>¿Cómo funciona?</h2>
+<ul>
+  <li>El audio WAV se decodifica con la API de audio del navegador.</li>
+  <li>Se codifica a MP3 con <a href="https://github.com/zhuker/lamejs" target="_blank" rel="noopener">lamejs</a> (el codificador LAME compilado a JavaScript).</li>
+  <li>El trabajo pesado corre en un <em>Web Worker</em> para que la página no se congele.</li>
+  <li>Formatos de entrada: WAV PCM (8/16/24/32 bits). Frecuencias admitidas por MP3: 8–48 kHz.</li>
+</ul>
+
+<style>
+  .c2m { margin: 1.5rem 0 2.5rem; }
+  .c2m-drop {
+    border: 2px dashed rgba(56,189,248,0.5);
+    border-radius: 12px;
+    background: var(--card, #131B2E);
+    padding: 2.2rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+  }
+  .c2m-drop:hover, .c2m-drop:focus, .c2m-drop.is-over {
+    border-color: var(--accent, #38BDF8);
+    background: #17223b;
+    outline: none;
+  }
+  .c2m-drop-inner p { margin: .5rem 0 0; color: var(--text-muted, #9CA3AF); }
+  .c2m-drop-icon { font-size: 1.8rem; }
+  .c2m-options {
+    display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem;
+  }
+  .c2m-options label {
+    display: flex; flex-direction: column; gap: .3rem;
+    font-size: .85rem; font-weight: 600; color: var(--text-muted, #9CA3AF);
+  }
+  .c2m-options select {
+    background: var(--card, #131B2E); color: var(--text, #F3F4F6);
+    border: 1px solid rgba(255,255,255,0.15); border-radius: 8px;
+    padding: .5rem .6rem; font-size: .95rem;
+  }
+  .c2m-list { list-style: none; padding: 0; margin: 1.4rem 0 0; }
+  .c2m-item {
+    background: var(--card, #131B2E);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: .9rem 1rem;
+    margin-bottom: .7rem;
+  }
+  .c2m-item-top { display: flex; justify-content: space-between; gap: 1rem; align-items: baseline; }
+  .c2m-name { font-weight: 700; color: #E5E7EB; word-break: break-all; }
+  .c2m-meta { font-size: .8rem; color: var(--text-muted, #9CA3AF); white-space: nowrap; }
+  .c2m-bar { height: 6px; border-radius: 3px; background: rgba(255,255,255,0.1); margin-top: .6rem; overflow: hidden; }
+  .c2m-bar > i { display: block; height: 100%; width: 0; background: var(--accent, #38BDF8); transition: width .2s; }
+  .c2m-status { font-size: .8rem; margin-top: .5rem; color: var(--text-muted, #9CA3AF); }
+  .c2m-status.err { color: #F87171; }
+  .c2m-dl {
+    display: inline-block; margin-top: .6rem;
+    background: var(--accent, #38BDF8); color: #04121e;
+    padding: .45rem .9rem; border-radius: 8px; font-weight: 700; font-size: .85rem;
+  }
+  .c2m-dl:hover { text-decoration: none; filter: brightness(1.08); }
+  .c2m-warn { color: #FBBF24; font-size: .9rem; }
+</style>
+
+<script>
+(function () {
+  var BASE = new URL('.', window.location.href).href;
+
+  var drop = document.getElementById('drop');
+  var fileInput = document.getElementById('file');
+  var list = document.getElementById('list');
+  var bitrateSel = document.getElementById('bitrate');
+  var channelsSel = document.getElementById('channels');
+  var supportWarn = document.getElementById('support-warn');
+
+  var AudioCtx = window.AudioContext || window.webkitAudioContext;
+  if (!AudioCtx || typeof Worker === 'undefined') {
+    supportWarn.hidden = false;
+  }
+
+  var queue = [];
+  var busy = false;
+
+  drop.addEventListener('click', function () { fileInput.click(); });
+  drop.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); }
+  });
+  fileInput.addEventListener('change', function () {
+    addFiles(fileInput.files);
+    fileInput.value = '';
+  });
+
+  ['dragenter', 'dragover'].forEach(function (ev) {
+    drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('is-over'); });
+  });
+  ['dragleave', 'drop'].forEach(function (ev) {
+    drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('is-over'); });
+  });
+  drop.addEventListener('drop', function (e) {
+    if (e.dataTransfer && e.dataTransfer.files) addFiles(e.dataTransfer.files);
+  });
+
+  function addFiles(files) {
+    var added = 0;
+    for (var i = 0; i < files.length; i++) {
+      var f = files[i];
+      if (!/\.wav$/i.test(f.name) && !/wav|wave/i.test(f.type)) continue;
+      var item = makeItem(f);
+      queue.push(item);
+      added++;
+    }
+    if (added) {
+      list.hidden = false;
+      pump();
+    }
+  }
+
+  function fmtBytes(n) {
+    if (n < 1024) return n + ' B';
+    if (n < 1048576) return (n / 1024).toFixed(1) + ' KB';
+    return (n / 1048576).toFixed(2) + ' MB';
+  }
+
+  function makeItem(file) {
+    var li = document.createElement('li');
+    li.className = 'c2m-item';
+    li.innerHTML =
+      '<div class="c2m-item-top">' +
+        '<span class="c2m-name"></span>' +
+        '<span class="c2m-meta"></span>' +
+      '</div>' +
+      '<div class="c2m-bar"><i></i></div>' +
+      '<div class="c2m-status">En cola…</div>';
+    li.querySelector('.c2m-name').textContent = file.name;
+    li.querySelector('.c2m-meta').textContent = fmtBytes(file.size);
+    list.appendChild(li);
+    return {
+      file: file,
+      el: li,
+      bar: li.querySelector('.c2m-bar > i'),
+      status: li.querySelector('.c2m-status'),
+      done: false
+    };
+  }
+
+  function setStatus(item, text, isErr) {
+    item.status.textContent = text;
+    item.status.classList.toggle('err', !!isErr);
+  }
+
+  function pump() {
+    if (busy) return;
+    var next = null;
+    for (var i = 0; i < queue.length; i++) {
+      if (!queue[i].done && !queue[i].started) { next = queue[i]; break; }
+    }
+    if (!next) return;
+    busy = true;
+    next.started = true;
+    processItem(next).then(function () {
+      busy = false;
+      pump();
+    }).catch(function (err) {
+      setStatus(next, 'Error: ' + ((err && err.message) || err), true);
+      next.done = true;
+      busy = false;
+      pump();
+    });
+  }
+
+  function processItem(item) {
+    setStatus(item, 'Decodificando audio…');
+    return item.file.arrayBuffer().then(function (buf) {
+      var ctx = new AudioCtx();
+      return ctx.decodeAudioData(buf).then(function (audio) {
+        ctx.close();
+        return audio;
+      });
+    }).then(function (audio) {
+      var wantChannels;
+      var sel = channelsSel.value;
+      if (sel === '1') wantChannels = 1;
+      else if (sel === '2') wantChannels = 2;
+      else wantChannels = Math.min(audio.numberOfChannels, 2);
+
+      var left = audio.getChannelData(0);
+      var right;
+      if (wantChannels === 2) {
+        right = audio.numberOfChannels > 1 ? audio.getChannelData(1) : audio.getChannelData(0);
+      }
+
+      // Copias transferibles al worker
+      var leftCopy = new Float32Array(left);
+      var rightCopy = right ? new Float32Array(right) : null;
+
+      setStatus(item, 'Codificando MP3…');
+
+      return new Promise(function (resolve, reject) {
+        var worker = new Worker(BASE + 'worker.js');
+        var transfer = [leftCopy.buffer];
+        if (rightCopy) transfer.push(rightCopy.buffer);
+
+        worker.onmessage = function (e) {
+          var m = e.data;
+          if (m.type === 'progress') {
+            item.bar.style.width = Math.round(m.value * 100) + '%';
+          } else if (m.type === 'done') {
+            worker.terminate();
+            item.bar.style.width = '100%';
+            var blob = new Blob([m.data], { type: 'audio/mpeg' });
+            finish(item, blob);
+            resolve();
+          } else if (m.type === 'error') {
+            worker.terminate();
+            reject(new Error(m.message));
+          }
+        };
+        worker.onerror = function (e) {
+          worker.terminate();
+          reject(new Error(e.message || 'fallo en el worker'));
+        };
+
+        worker.postMessage({
+          left: leftCopy,
+          right: rightCopy,
+          sampleRate: audio.sampleRate,
+          bitrate: parseInt(bitrateSel.value, 10),
+          channels: rightCopy ? 2 : 1
+        }, transfer);
+      });
+    });
+  }
+
+  function finish(item, blob) {
+    item.done = true;
+    var url = URL.createObjectURL(blob);
+    var name = item.file.name.replace(/\.wav$/i, '') + '.mp3';
+    setStatus(item, 'Listo — ' + fmtBytes(blob.size));
+    var a = document.createElement('a');
+    a.className = 'c2m-dl';
+    a.href = url;
+    a.download = name;
+    a.textContent = '⬇ Descargar ' + name;
+    item.el.appendChild(a);
+  }
+})();
+</script>
