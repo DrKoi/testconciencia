@@ -26,6 +26,7 @@ Bienvenido al portal central del ecosistema **TestConCiencia**. Aquí convergen 
 ### 🛠️ Herramientas
 
 * 🎧 **[Conversor de WAV a MP3]({{ "/herramientas/wav-a-mp3/" | relative_url }})** — Convierte audio `.wav` a `.mp3` sin salir del navegador. Nada se sube a Internet: todo el procesamiento es local.
+* 📋 **[Pegar imagen → descargar PNG]({{ "/herramientas/pegar-imagen-png/" | relative_url }})** — Pega un pantallazo o imagen copiada y descárgala como `.png` al instante, sin pasar por Word ni Paint.
 
 ---
 

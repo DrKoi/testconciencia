@@ -1,0 +1,274 @@
+---
+layout: default
+title: Pegar imagen y descargar PNG — TestConCiencia
+---
+
+<h1>📋 Pegar imagen → descargar PNG</h1>
+
+<blockquote>
+  Copia una imagen o un pantallazo y <strong>pégalo aquí</strong> (Ctrl+V / ⌘V).
+  Se descarga al instante como archivo <strong>.png</strong>. Todo ocurre en tu navegador;
+  nada se sube a Internet.
+</blockquote>
+
+<div class="p2p">
+  <div id="zone" class="p2p-zone" tabindex="0" role="button"
+       aria-label="Pega o suelta una imagen aquí">
+    <div class="p2p-zone-inner">
+      <span class="p2p-icon">🖼️</span>
+      <p><strong>Pega la imagen aquí</strong> con <kbd>Ctrl</kbd>+<kbd>V</kbd> (o <kbd>⌘</kbd>+<kbd>V</kbd>)<br>
+      también puedes arrastrar y soltar un archivo de imagen</p>
+      <button id="btn-read" type="button" class="p2p-btn">📋 Pegar desde el portapapeles</button>
+    </div>
+  </div>
+
+  <div class="p2p-options">
+    <label>
+      Nombre del archivo
+      <span class="p2p-name-row">
+        <input id="fname" type="text" value="imagen" spellcheck="false" autocomplete="off">
+        <span>.png</span>
+      </span>
+    </label>
+    <label class="p2p-check">
+      <input id="stamp" type="checkbox" checked>
+      Añadir fecha y hora al nombre
+    </label>
+    <label class="p2p-check">
+      <input id="auto" type="checkbox" checked>
+      Descargar automáticamente al pegar
+    </label>
+  </div>
+
+  <div id="result" class="p2p-result" hidden>
+    <div class="p2p-preview-wrap">
+      <img id="preview" alt="Vista previa de la imagen pegada">
+    </div>
+    <div class="p2p-result-info">
+      <p id="meta" class="p2p-meta"></p>
+      <a id="download" class="p2p-btn p2p-btn-primary" download>⬇ Descargar PNG</a>
+    </div>
+  </div>
+
+  <p id="msg" class="p2p-msg" hidden></p>
+</div>
+
+<h2>¿Para qué sirve?</h2>
+<ul>
+  <li>Cuando copias una imagen o haces un pantallazo (Recorte, <kbd>Impr Pant</kbd>, etc.) y
+      no hay botón de «guardar»: normalmente tocaría pegarla en Word o Paint para poder
+      exportarla. Con esta herramienta la pegas aquí y obtienes el <code>.png</code> directamente.</li>
+  <li>Convierte a PNG cualquier imagen del portapapeles (BMP, JPEG, etc.) y elimina metadatos.</li>
+  <li>Funciona sin conexión una vez cargada la página.</li>
+</ul>
+
+<style>
+  .p2p { margin: 1.5rem 0 2.5rem; }
+  .p2p-zone {
+    border: 2px dashed rgba(56,189,248,0.5);
+    border-radius: 12px;
+    background: var(--card, #131B2E);
+    padding: 2.2rem 1rem;
+    text-align: center;
+    transition: border-color .2s, background .2s;
+  }
+  .p2p-zone:hover, .p2p-zone:focus, .p2p-zone.is-over {
+    border-color: var(--accent, #38BDF8);
+    background: #17223b;
+    outline: none;
+  }
+  .p2p-zone-inner p { margin: .6rem 0 0; color: var(--text-muted, #9CA3AF); }
+  .p2p-icon { font-size: 1.8rem; }
+  kbd {
+    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 4px; padding: .05rem .35rem; font-size: .85em;
+  }
+  .p2p-btn {
+    display: inline-block; margin-top: 1rem; cursor: pointer;
+    background: rgba(255,255,255,0.08); color: var(--text, #F3F4F6);
+    border: 1px solid rgba(255,255,255,0.15); border-radius: 8px;
+    padding: .5rem 1rem; font-size: .9rem; font-weight: 600; font-family: inherit;
+    text-decoration: none;
+  }
+  .p2p-btn:hover { background: rgba(255,255,255,0.14); text-decoration: none; }
+  .p2p-btn-primary {
+    background: var(--accent, #38BDF8); color: #04121e; border-color: transparent;
+  }
+  .p2p-btn-primary:hover { filter: brightness(1.08); }
+  .p2p-options { display: flex; flex-wrap: wrap; gap: 1rem 1.6rem; margin-top: 1.2rem; align-items: flex-start; }
+  .p2p-options label {
+    display: flex; flex-direction: column; gap: .35rem;
+    font-size: .85rem; font-weight: 600; color: var(--text-muted, #9CA3AF);
+  }
+  .p2p-name-row { display: flex; align-items: center; gap: .35rem; color: var(--text-muted); }
+  .p2p-options input[type="text"] {
+    background: var(--card, #131B2E); color: var(--text, #F3F4F6);
+    border: 1px solid rgba(255,255,255,0.15); border-radius: 8px;
+    padding: .5rem .6rem; font-size: .95rem; min-width: 12rem;
+  }
+  .p2p-check { flex-direction: row !important; align-items: center; gap: .5rem !important; font-weight: 600; }
+  .p2p-result {
+    margin-top: 1.6rem; display: flex; gap: 1.2rem; flex-wrap: wrap;
+    background: var(--card, #131B2E); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px; padding: 1rem;
+  }
+  .p2p-preview-wrap {
+    background: repeating-conic-gradient(#2a3550 0% 25%, #1c2740 0% 50%) 50% / 20px 20px;
+    border-radius: 8px; padding: .4rem; flex: 0 0 auto;
+  }
+  #preview { max-width: 320px; max-height: 240px; display: block; border-radius: 4px; }
+  .p2p-result-info { display: flex; flex-direction: column; gap: .6rem; justify-content: center; }
+  .p2p-meta { color: var(--text-muted, #9CA3AF); font-size: .9rem; margin: 0; }
+  .p2p-msg { font-size: .9rem; color: #FBBF24; }
+  .p2p-msg.err { color: #F87171; }
+  .p2p-msg.ok { color: #4ADE80; }
+</style>
+
+<script>
+(function () {
+  var zone = document.getElementById('zone');
+  var btnRead = document.getElementById('btn-read');
+  var fnameInput = document.getElementById('fname');
+  var stampCheck = document.getElementById('stamp');
+  var autoCheck = document.getElementById('auto');
+  var result = document.getElementById('result');
+  var preview = document.getElementById('preview');
+  var meta = document.getElementById('meta');
+  var download = document.getElementById('download');
+  var msg = document.getElementById('msg');
+
+  var lastUrl = null;
+
+  function showMsg(text, kind) {
+    msg.textContent = text;
+    msg.className = 'p2p-msg' + (kind ? ' ' + kind : '');
+    msg.hidden = !text;
+  }
+
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+  function buildName() {
+    var base = (fnameInput.value || 'imagen').trim().replace(/[\\/:*?"<>|]+/g, '_') || 'imagen';
+    if (stampCheck.checked) {
+      var d = new Date();
+      base += '-' + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) +
+              '-' + pad(d.getHours()) + pad(d.getMinutes()) + pad(d.getSeconds());
+    }
+    return base + '.png';
+  }
+
+  function fmtBytes(n) {
+    if (n < 1024) return n + ' B';
+    if (n < 1048576) return (n / 1024).toFixed(1) + ' KB';
+    return (n / 1048576).toFixed(2) + ' MB';
+  }
+
+  function handleBlob(blob) {
+    if (!blob || blob.type.indexOf('image/') !== 0) {
+      showMsg('No se encontró ninguna imagen en el portapapeles.', 'err');
+      return;
+    }
+    showMsg('Procesando imagen…');
+    var img = new Image();
+    var objUrl = URL.createObjectURL(blob);
+    img.onload = function () {
+      var canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      URL.revokeObjectURL(objUrl);
+      canvas.toBlob(function (pngBlob) {
+        if (!pngBlob) { showMsg('No se pudo convertir la imagen a PNG.', 'err'); return; }
+        deliver(pngBlob, canvas.width, canvas.height);
+      }, 'image/png');
+    };
+    img.onerror = function () {
+      URL.revokeObjectURL(objUrl);
+      showMsg('El contenido pegado no es una imagen válida.', 'err');
+    };
+    img.src = objUrl;
+  }
+
+  function deliver(pngBlob, w, h) {
+    if (lastUrl) URL.revokeObjectURL(lastUrl);
+    lastUrl = URL.createObjectURL(pngBlob);
+    var name = buildName();
+
+    preview.src = lastUrl;
+    meta.textContent = w + ' × ' + h + ' px · ' + fmtBytes(pngBlob.size) + ' · ' + name;
+    download.href = lastUrl;
+    download.setAttribute('download', name);
+    result.hidden = false;
+
+    if (autoCheck.checked) {
+      var a = document.createElement('a');
+      a.href = lastUrl;
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      showMsg('PNG descargado: ' + name, 'ok');
+    } else {
+      showMsg('Imagen lista. Pulsa «Descargar PNG».', 'ok');
+    }
+  }
+
+  // Pegado con Ctrl+V en cualquier parte de la página
+  window.addEventListener('paste', function (e) {
+    var items = (e.clipboardData || window.clipboardData).items;
+    if (!items) return;
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].type && items[i].type.indexOf('image/') === 0) {
+        e.preventDefault();
+        handleBlob(items[i].getAsFile());
+        return;
+      }
+    }
+    showMsg('No se detectó una imagen en lo que pegaste.', 'err');
+  });
+
+  // Botón: leer el portapapeles con la API asíncrona
+  btnRead.addEventListener('click', function () {
+    if (!navigator.clipboard || !navigator.clipboard.read) {
+      showMsg('Tu navegador no permite leer el portapapeles con un botón. Usa Ctrl+V.', 'err');
+      return;
+    }
+    navigator.clipboard.read().then(function (items) {
+      for (var i = 0; i < items.length; i++) {
+        var type = items[i].types.filter(function (t) { return t.indexOf('image/') === 0; })[0];
+        if (type) {
+          items[i].getType(type).then(handleBlob);
+          return;
+        }
+      }
+      showMsg('No hay ninguna imagen en el portapapeles.', 'err');
+    }).catch(function (err) {
+      showMsg('No se pudo acceder al portapapeles: ' + (err && err.message || err) + '. Prueba con Ctrl+V.', 'err');
+    });
+  });
+
+  // Arrastrar y soltar
+  ['dragenter', 'dragover'].forEach(function (ev) {
+    zone.addEventListener(ev, function (e) { e.preventDefault(); zone.classList.add('is-over'); });
+  });
+  ['dragleave', 'drop'].forEach(function (ev) {
+    zone.addEventListener(ev, function (e) { e.preventDefault(); zone.classList.remove('is-over'); });
+  });
+  zone.addEventListener('drop', function (e) {
+    var files = e.dataTransfer && e.dataTransfer.files;
+    if (files && files.length) {
+      for (var i = 0; i < files.length; i++) {
+        if (files[i].type.indexOf('image/') === 0) { handleBlob(files[i]); return; }
+      }
+    }
+    showMsg('Lo que soltaste no es un archivo de imagen.', 'err');
+  });
+
+  zone.addEventListener('click', function (e) {
+    if (e.target === btnRead) return;
+    zone.focus();
+    showMsg('Ahora pulsa Ctrl+V para pegar la imagen.');
+  });
+})();
+</script>
