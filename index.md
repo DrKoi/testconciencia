@@ -27,7 +27,7 @@ Bienvenido al portal central del ecosistema **TestConCiencia**. Aquí convergen 
 
 * 🎧 **[Conversor de WAV a MP3]({{ "/herramientas/wav-a-mp3/" | relative_url }})** — Convierte audio `.wav` a `.mp3` sin salir del navegador. Nada se sube a Internet: todo el procesamiento es local.
 * 📋 **[Pegar imagen → descargar PNG]({{ "/herramientas/pegar-imagen-png/" | relative_url }})** — Pega un pantallazo o imagen copiada y descárgala como `.png` al instante, sin pasar por Word ni Paint.
-* 🧹 **[Limpiar metadatos]({{ "/herramientas/limpiar-metadatos/" | relative_url }})** — Quita ubicación GPS, cámara, fechas y autor de imágenes (JPEG, PNG, WebP) y PDF antes de compartirlos. Todo local, sin recomprimir los píxeles.
+* 🧹 **[Limpiar metadatos]({{ "/herramientas/limpiar-metadatos/" | relative_url }})** — Quita ubicación GPS, cámara, autor, empresa y fechas de imágenes, PDF, documentos de Office/LibreOffice y audio (MP3, FLAC, M4A) antes de compartirlos. Todo local.
 
 ---
 

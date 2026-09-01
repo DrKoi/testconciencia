@@ -1,24 +1,26 @@
 ---
 layout: default
-title: Limpiar metadatos de imágenes y PDF — TestConCiencia
+title: Limpiar metadatos de imágenes, documentos y audio — TestConCiencia
 ---
 
 <h1>🧹 Limpiar metadatos</h1>
 
 <blockquote>
-  Quita los datos ocultos de tus <strong>imágenes</strong> (JPEG, PNG, WebP) y
-  <strong>PDF</strong> antes de compartirlos: ubicación GPS, modelo de cámara, fechas,
-  autor, software y comentarios. Todo ocurre en tu navegador; ningún archivo se sube a Internet.
+  Quita los datos ocultos de tus archivos antes de compartirlos: ubicación GPS,
+  modelo de cámara, fechas, autor, empresa, software y comentarios.
+  Imágenes, PDF, documentos de Office/LibreOffice y audio. Todo ocurre en tu
+  navegador; ningún archivo se sube a Internet.
 </blockquote>
 
 <div class="lm">
   <div id="drop" class="lm-drop" tabindex="0" role="button" aria-label="Seleccionar archivos">
     <input id="file" type="file"
-           accept="image/jpeg,image/png,image/webp,application/pdf,.jpg,.jpeg,.png,.webp,.pdf" multiple hidden>
+           accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml,application/pdf,audio/mpeg,audio/flac,audio/mp4,.jpg,.jpeg,.png,.webp,.gif,.svg,.pdf,.mp3,.flac,.m4a,.m4b,.aac,.rtf,.docx,.xlsx,.pptx,.docm,.xlsm,.pptm,.odt,.ods,.odp"
+           multiple hidden>
     <div class="lm-drop-inner">
       <span class="lm-drop-icon">🧽</span>
       <p><strong>Arrastra aquí tus archivos</strong><br>o haz clic para elegirlos</p>
-      <p class="lm-drop-sub">JPEG · PNG · WebP · PDF</p>
+      <p class="lm-drop-sub">JPEG · PNG · WebP · GIF · SVG · PDF · MP3 · FLAC · M4A · DOCX · XLSX · PPTX · ODT · RTF</p>
     </div>
   </div>
 
@@ -48,23 +50,30 @@ title: Limpiar metadatos de imágenes y PDF — TestConCiencia
 
 <h2>¿Qué hace exactamente?</h2>
 <ul>
-  <li><strong>Imágenes:</strong> elimina los bloques de metadatos sin volver a comprimir los píxeles.
-      En JPEG borra los segmentos <code>APP1</code> (EXIF y XMP), <code>APP13</code> (IPTC) y los
-      comentarios <code>COM</code>. En PNG borra los trozos <code>tEXt</code>, <code>iTXt</code>,
-      <code>zTXt</code>, <code>eXIf</code> y <code>tIME</code>. En WebP borra los trozos
-      <code>EXIF</code> y <code>XMP</code>. El perfil de color (ICC) se conserva.</li>
+  <li><strong>Imágenes (JPEG, PNG, WebP):</strong> elimina los bloques de metadatos sin volver a
+      comprimir los píxeles — EXIF, XMP, IPTC y comentarios. El perfil de color (ICC) se conserva.
+      <em>Modo máximo</em> recomprime la imagen para garantizar que no queda nada.</li>
+  <li><strong>GIF y SVG:</strong> quita comentarios y bloques de texto/XMP del GIF; en SVG borra
+      <code>&lt;metadata&gt;</code>, comentarios y los datos del editor (Inkscape/Sodipodi).</li>
   <li><strong>PDF:</strong> vacía el diccionario <code>/Info</code> (título, autor, asunto,
-      palabras clave, programa, fechas) y elimina el flujo de metadatos <code>XMP</code>.
-      Se procesa con <a href="https://pdf-lib.js.org/" target="_blank" rel="noopener">pdf-lib</a>.</li>
-  <li>El original nunca se modifica: siempre descargas una copia nueva con el sufijo
-      <code>-limpio</code>.</li>
-  <li>Funciona sin conexión una vez cargada la página.</li>
+      palabras clave, programa, fechas) y elimina el <code>XMP</code>. Con
+      <a href="https://pdf-lib.js.org/" target="_blank" rel="noopener">pdf-lib</a>.</li>
+  <li><strong>Documentos (DOCX, XLSX, PPTX, ODT, ODS, ODP):</strong> reemplaza las propiedades
+      del documento (autor, «última modificación por», empresa, responsable, plantilla, revisión,
+      tiempo de edición, propiedades personalizadas) por versiones vacías y elimina la miniatura.
+      El contenido no se toca.</li>
+  <li><strong>Audio (MP3, FLAC, M4A):</strong> borra etiquetas ID3, APEv2, comentarios Vorbis,
+      carátulas y las etiquetas de iTunes (incluida la <strong>ubicación GPS</strong> y la cuenta
+      de Apple ID). No recodifica el audio.</li>
+  <li><strong>RTF:</strong> elimina el grupo <code>\info</code>, el generador y la tabla de revisiones.</li>
+  <li>El original nunca se modifica: descargas una copia nueva con el sufijo <code>-limpio</code>.
+      Funciona sin conexión una vez cargada la página.</li>
 </ul>
 
 <p class="lm-note">
   Nota: quitar metadatos no anonimiza el <em>contenido</em>. Una foto puede seguir mostrando
-  tu calle, y un PDF puede llevar tu nombre en el texto. Esto solo limpia los datos
-  <em>incrustados</em> que no se ven.
+  tu calle y un documento puede llevar tu nombre en el texto. Esto solo limpia los datos
+  <em>incrustados</em> que no se ven. Para vídeo (MP4/MOV) todavía no; escríbeme si lo necesitas.
 </p>
 
 <style>
@@ -198,13 +207,58 @@ title: Limpiar metadatos de imágenes y PDF — TestConCiencia
     if (added) { list.hidden = false; bulk.hidden = false; }
   }
 
+  var EXT = {
+    jpeg: 'jpg', png: 'png', webp: 'webp', gif: 'gif', pdf: 'pdf',
+    mp3: 'mp3', flac: 'flac', m4a: 'm4a', rtf: 'rtf', svg: 'svg', office: null
+  };
+  var MIME = {
+    jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif',
+    pdf: 'application/pdf', mp3: 'audio/mpeg', flac: 'audio/flac', m4a: 'audio/mp4',
+    rtf: 'application/rtf', svg: 'image/svg+xml', office: 'application/octet-stream'
+  };
+  var OFFICE_EXT = /\.(docx|xlsx|pptx|docm|xlsm|pptm|odt|ods|odp|ott|ots|otp)$/;
+
   function detectKind(f) {
     var n = f.name.toLowerCase();
-    if (f.type === 'application/pdf' || /\.pdf$/.test(n)) return 'pdf';
-    if (f.type === 'image/jpeg' || /\.jpe?g$/.test(n)) return 'jpeg';
-    if (f.type === 'image/png' || /\.png$/.test(n)) return 'png';
-    if (f.type === 'image/webp' || /\.webp$/.test(n)) return 'webp';
+    var t = f.type;
+    if (t === 'application/pdf' || /\.pdf$/.test(n)) return 'pdf';
+    if (t === 'image/jpeg' || /\.jpe?g$/.test(n)) return 'jpeg';
+    if (t === 'image/png' || /\.png$/.test(n)) return 'png';
+    if (t === 'image/webp' || /\.webp$/.test(n)) return 'webp';
+    if (t === 'image/gif' || /\.gif$/.test(n)) return 'gif';
+    if (t === 'image/svg+xml' || /\.svg$/.test(n)) return 'svg';
+    if (/\.mp3$/.test(n) || t === 'audio/mpeg') return 'mp3';
+    if (/\.flac$/.test(n) || t === 'audio/flac' || t === 'audio/x-flac') return 'flac';
+    if (/\.(m4a|m4b|aac|mp4a)$/.test(n) || t === 'audio/mp4' || t === 'audio/x-m4a') return 'm4a';
+    if (/\.rtf$/.test(n) || t === 'application/rtf' || t === 'text/rtf') return 'rtf';
+    if (OFFICE_EXT.test(n)) return 'office';
     return null;
+  }
+
+  function kindLabel(kind) {
+    return kind === 'office' ? 'documento' : kind;
+  }
+
+  // ---- carga perezosa de módulos ----
+  var loaded = {};
+  function loadScript(src) {
+    if (loaded[src]) return loaded[src];
+    loaded[src] = new Promise(function (res, rej) {
+      var s = document.createElement('script');
+      s.src = src;
+      s.onload = function () { res(); };
+      s.onerror = function () { rej(new Error('no se pudo cargar ' + src)); };
+      document.head.appendChild(s);
+    });
+    return loaded[src];
+  }
+  function loadDeps(kind) {
+    if (kind === 'mp3' || kind === 'flac' || kind === 'm4a') return loadScript('metaclean-audio.js?v=1');
+    if (kind === 'rtf' || kind === 'svg' || kind === 'gif') return loadScript('metaclean-extra.js?v=1');
+    if (kind === 'office') {
+      return loadScript('fflate.min.js?v=1').then(function () { return loadScript('metaclean-office.js?v=1'); });
+    }
+    return Promise.resolve();
   }
 
   function fmtBytes(n) {
@@ -246,32 +300,50 @@ title: Limpiar metadatos de imágenes y PDF — TestConCiencia
     item.chips.appendChild(span);
   }
 
-  function process(item) {
-    item.file.arrayBuffer().then(function (buf) {
-      var bytes = new Uint8Array(buf);
-      var result;
-      if (item.kind === 'jpeg') result = MetaClean.cleanJpeg(bytes);
-      else if (item.kind === 'png') result = MetaClean.cleanPng(bytes);
-      else if (item.kind === 'webp') result = MetaClean.cleanWebp(bytes);
-      else return cleanPdf(bytes).then(function (r) { finish(item, r); });
+  var IMG = { jpeg: 1, png: 1, webp: 1 };
 
-      if (maxMode.checked && item.kind !== 'pdf') {
-        return canvasClean(item.file, item.kind).then(function (blob) {
-          return blob.arrayBuffer().then(function (ab) {
-            result.bytes = new Uint8Array(ab);
-            result.note = 'recomprimido (modo máximo)';
-            finish(item, result);
-          });
-        });
-      }
-      finish(item, result);
-    }).catch(function (err) {
-      setStatus(item, 'Error: ' + ((err && err.message) || err), true);
-    });
+  function process(item) {
+    if (item.file.size > 300 * 1048576) {
+      setStatus(item, 'Archivo demasiado grande (más de 300 MB) para procesar en el navegador.', true);
+      return;
+    }
+    setStatus(item, 'Analizando…');
+    loadDeps(item.kind)
+      .then(function () { return item.file.arrayBuffer(); })
+      .then(function (buf) {
+        var bytes = new Uint8Array(buf);
+
+        if (IMG[item.kind]) {
+          var r = item.kind === 'jpeg' ? MetaClean.cleanJpeg(bytes)
+            : item.kind === 'png' ? MetaClean.cleanPng(bytes) : MetaClean.cleanWebp(bytes);
+          if (maxMode.checked) {
+            return canvasClean(item.file, item.kind).then(function (blob) {
+              return blob.arrayBuffer().then(function (ab) {
+                r.bytes = new Uint8Array(ab);
+                r.note = 'recomprimido (modo máximo)';
+                finish(item, r);
+              });
+            });
+          }
+          return finish(item, r);
+        }
+        if (item.kind === 'pdf') return cleanPdf(bytes).then(function (r) { finish(item, r); });
+        if (item.kind === 'mp3') return finish(item, MetaCleanAudio.cleanMp3(bytes));
+        if (item.kind === 'flac') return finish(item, MetaCleanAudio.cleanFlac(bytes));
+        if (item.kind === 'm4a') return finish(item, MetaCleanAudio.cleanM4a(bytes));
+        if (item.kind === 'office') return finish(item, MetaCleanOffice.cleanOffice(bytes));
+        if (item.kind === 'rtf') return finish(item, MetaCleanExtra.cleanRtf(bytes));
+        if (item.kind === 'svg') return finish(item, MetaCleanExtra.cleanSvg(bytes));
+        if (item.kind === 'gif') return finish(item, MetaCleanExtra.cleanGif(bytes));
+        throw new Error('tipo no soportado');
+      })
+      .catch(function (err) {
+        setStatus(item, 'Error: ' + ((err && err.message) || err), true);
+      });
   }
 
   function finish(item, result) {
-    var found = result.found || [];
+    var found = dedupe(result.found || []);
     if (found.length === 0) {
       addChip(item, '✓ Sin metadatos ocultos', true);
     } else {
@@ -297,14 +369,18 @@ title: Limpiar metadatos de imágenes y PDF — TestConCiencia
     setStatus(item, msg);
   }
 
-  function mimeFor(kind) {
-    return kind === 'pdf' ? 'application/pdf'
-      : kind === 'png' ? 'image/png'
-      : kind === 'webp' ? 'image/webp' : 'image/jpeg';
+  function dedupe(arr) {
+    var seen = {}, out = [];
+    arr.forEach(function (x) { if (!seen[x]) { seen[x] = 1; out.push(x); } });
+    return out;
   }
 
+  function mimeFor(kind) { return MIME[kind] || 'application/octet-stream'; }
+
   function cleanName(name, kind) {
-    var ext = kind === 'pdf' ? 'pdf' : kind === 'png' ? 'png' : kind === 'webp' ? 'webp' : 'jpg';
+    var m = /\.([^.]+)$/.exec(name);
+    var origExt = m ? m[1] : '';
+    var ext = EXT[kind] || origExt || 'bin';   // office conserva su extensión (docx, odt…)
     var base = name.replace(/\.[^.]+$/, '');
     return base + '-limpio.' + ext;
   }
