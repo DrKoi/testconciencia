@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+# Kiwikolab (juegos) se ha movido a su propio dominio: https://kiwikolab.com
+# Estas rutas solo se mantienen como redirección temporal.
+Disallow: /kiwikos-lab/
+
+Sitemap: https://www.testconciencia.com/sitemap.xml
