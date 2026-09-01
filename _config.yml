@@ -1,5 +1,21 @@
 title: TestConCiencia
-description: "Sistematizando el arte de encontrar errores."
+description: "Herramientas web gratuitas que se ejecutan 100% en tu navegador: tus archivos nunca salen de tu equipo."
 url: "https://www.testconciencia.com"
 baseurl: ""
 markdown: kramdown
+
+plugins:
+  - jekyll-sitemap
+
+# /kiwikos-lab/ se mantiene solo como redirección temporal a kiwikolab.com;
+# no debe aparecer en el sitemap ni indexarse.
+defaults:
+  - scope:
+      path: "kiwikos-lab"
+    values:
+      sitemap: false
+
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - vendor
