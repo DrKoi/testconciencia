@@ -1,0 +1,19 @@
+{
+  "name": "tabwip",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Extension de Chrome (MV3): Foco Unico (WIP=1) para pestanas con Parking Lot nativo (chrome.tabGroups) y cierre dopaminergico.",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.280",
+    "typescript": "^5.6.2",
+    "vitest": "^2.1.2"
+  }
+}

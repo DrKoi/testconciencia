@@ -1,0 +1,47 @@
+{
+  "manifest_version": 3,
+  "name": "TabWIP",
+  "version": "1.0.0",
+  "description": "Foco Unico (WIP=1) para pestanas del navegador: un Parking Lot colapsable con grupos nativos de Chrome y cierre dopaminergico al completar.",
+  "background": {
+    "service_worker": "src/background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "src/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "TabWIP"
+  },
+  "options_page": "src/options.html",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "permissions": [
+    "tabs",
+    "tabGroups",
+    "storage",
+    "notifications"
+  ],
+  "commands": {
+    "toggle-focus": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+F",
+        "mac": "Command+Shift+F"
+      },
+      "description": "Activar o desactivar el Modo Foco (WIP=1)"
+    },
+    "complete-active-tab": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+X",
+        "mac": "Command+Shift+X"
+      },
+      "description": "Completar la pestana activa (cierre dopaminergico)"
+    }
+  }
+}

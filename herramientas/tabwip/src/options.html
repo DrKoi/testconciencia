@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>TabWIP — Preferencias</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #fafaf9;
+        --fg: #1c1917;
+        --muted: #78716c;
+        --border: #e7e5e4;
+        --accent: #0891b2;
+        --accent-fg: #ffffff;
+        --card: #ffffff;
+        --danger: #b91c1c;
+        --danger-fg: #ffffff;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme='light']) {
+          --bg: #18181b;
+          --fg: #f4f4f5;
+          --muted: #a1a1aa;
+          --border: #3f3f46;
+          --accent: #22d3ee;
+          --accent-fg: #052e33;
+          --card: #27272a;
+          --danger: #7f1d1d;
+          --danger-fg: #fecaca;
+        }
+      }
+      :root[data-theme='dark'] {
+        --bg: #18181b;
+        --fg: #f4f4f5;
+        --muted: #a1a1aa;
+        --border: #3f3f46;
+        --accent: #22d3ee;
+        --accent-fg: #052e33;
+        --card: #27272a;
+        --danger: #7f1d1d;
+        --danger-fg: #fecaca;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      }
+      main {
+        max-width: 560px;
+        margin: 0 auto;
+        padding: 28px 20px 60px;
+      }
+      h1 {
+        font-size: 20px;
+      }
+      p.lead {
+        color: var(--muted);
+      }
+      section {
+        border: 1px solid var(--border);
+        background: var(--card);
+        border-radius: 12px;
+        padding: 16px 18px;
+        margin: 16px 0;
+      }
+      h2 {
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--muted);
+        margin: 0 0 12px;
+      }
+      label.row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 6px 0;
+      }
+      select,
+      button {
+        font: inherit;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: var(--bg);
+        color: var(--fg);
+        padding: 6px 10px;
+      }
+      button {
+        cursor: pointer;
+      }
+      button.danger {
+        background: var(--danger);
+        color: var(--danger-fg);
+        border-color: transparent;
+      }
+      .hint {
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 6px;
+      }
+      #resetFeedback {
+        font-size: 12px;
+        color: var(--accent);
+        min-height: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>🎯 TabWIP — Preferencias</h1>
+      <p class="lead">Foco Unico (WIP=1) para pestanas. Cero rachas punitivas: solo victorias.</p>
+
+      <section>
+        <h2>Sonido</h2>
+        <label class="row">
+          <span>Sonido suave al completar una pestana</span>
+          <input id="soundToggle" type="checkbox" />
+        </label>
+        <p class="hint">Desactivado por defecto. Usa un tono breve generado con Web Audio, sin archivos de audio.</p>
+      </section>
+
+      <section>
+        <h2>Tema</h2>
+        <label class="row">
+          <span>Apariencia del popup y esta pagina</span>
+          <select id="themeSelect">
+            <option value="system">Seguir el sistema</option>
+            <option value="light">Claro</option>
+            <option value="dark">Oscuro</option>
+          </select>
+        </label>
+      </section>
+
+      <section>
+        <h2>Datos locales</h2>
+        <p class="hint">
+          El Victory Log y las estadisticas viven solo en este navegador (chrome.storage.local). Nada se
+          sincroniza ni se envia a ningun servidor.
+        </p>
+        <button id="resetBtn" class="danger" type="button">Borrar Victory Log y preferencias</button>
+        <div id="resetFeedback"></div>
+      </section>
+    </main>
+    <script type="module" src="options.js"></script>
+  </body>
+</html>

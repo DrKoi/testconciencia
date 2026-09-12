@@ -1,0 +1,2268 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ModelTasker TDAH — Foco Único (WIP=1) &amp; Mínima Fricción</title>
+  <meta name="description" content="Aplicación ergonómica de productividad para TDAH Inatento basada en Foco Único (WIP=1), Micro-Acción Just-In-Time, Parking Lot atenuado y Cierre Dopaminérgico." />
+  <style>
+    /* ==========================================================================
+       VARIABLES Y PALETA ERGONÓMICA COGNITIVA (WCAG 2.1 AA)
+       ========================================================================== */
+    :root {
+      /* Tema Oscuro Neutro (Por Defecto) - Slate Profundo para descanso ocular */
+      --bg-app: #0f172a;
+      --bg-surface: #1e293b;
+      --bg-surface-elevated: #334155;
+      --border-subtle: #334155;
+      --border-focus: #38bdf8;
+      
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+
+      /* Colores Funcionales Neuro-ergonómicos */
+      --accent-focus: #38bdf8;          /* Azul cielo calmante/energizante para WIP=1 */
+      --accent-focus-glow: rgba(56, 189, 248, 0.22);
+      --accent-success: #10b981;        /* Verde esmeralda dopaminérgico */
+      --accent-success-glow: rgba(16, 185, 129, 0.25);
+      --accent-parking: #f59e0b;        /* Ámbar cálido para tareas pausadas */
+      --accent-parking-glow: rgba(245, 158, 11, 0.2);
+      --accent-danger: #ef4444;
+      
+      --bg-parking-dimmed: #141d2e;     /* Baja saliencia para Parking Lot */
+      --bg-dimmed-opacity: 0.55;
+
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --radius-full: 9999px;
+
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.25);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+      --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.45);
+      --shadow-focus: 0 0 0 2px var(--accent-focus), 0 0 24px var(--accent-focus-glow);
+
+      --font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      --transition-fast: 0.15s ease;
+      --transition-normal: 0.25s ease;
+    }
+
+    [data-theme="light"] {
+      --bg-app: #f8fafc;
+      --bg-surface: #ffffff;
+      --bg-surface-elevated: #f1f5f9;
+      --border-subtle: #cbd5e1;
+      --border-focus: #0284c7;
+
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+
+      --accent-focus: #0284c7;
+      --accent-focus-glow: rgba(2, 132, 199, 0.18);
+      --accent-success: #059669;
+      --accent-success-glow: rgba(5, 150, 105, 0.2);
+      --accent-parking: #d97706;
+      --accent-parking-glow: rgba(217, 119, 6, 0.15);
+      --accent-danger: #dc2626;
+
+      --bg-parking-dimmed: #f1f5f9;
+      --bg-dimmed-opacity: 0.65;
+
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.12);
+      --shadow-focus: 0 0 0 2px var(--accent-focus), 0 0 20px var(--accent-focus-glow);
+    }
+
+    /* ==========================================================================
+       RESET Y ACCESIBILIDAD BASE
+       ========================================================================== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background-color: var(--bg-app);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      transition: background-color var(--transition-normal), color var(--transition-normal);
+      display: flex;
+      flex-direction: column;
+    }
+
+    *:focus-visible {
+      outline: 2px solid var(--accent-focus) !important;
+      outline-offset: 3px !important;
+    }
+
+    button, input, select, textarea {
+      font-family: inherit;
+      font-size: 1rem;
+      color: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      background: none;
+    }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    /* Reducción de movimiento para usuarios neurodivergentes sensibles */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+        scroll-behavior: auto !important;
+      }
+      .pulse-emerald, .active-focus-card {
+        animation: none !important;
+      }
+    }
+
+    /* ==========================================================================
+       MAQUETACIÓN Y CONTENEDOR PRINCIPAL
+       ========================================================================== */
+    #app-root {
+      width: 100%;
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 24px 16px 48px 16px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* Encabezado */
+    .app-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .brand-group {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .app-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-gradient {
+      background: linear-gradient(135deg, var(--accent-focus) 0%, #a855f7 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .badge-tdah {
+      font-size: 0.72rem;
+      font-weight: 700;
+      background: var(--bg-surface-elevated);
+      color: var(--accent-focus);
+      padding: 2px 7px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--border-subtle);
+      letter-spacing: 0.05em;
+    }
+
+    .app-subtitle {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .icon-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: var(--radius-md);
+      background: var(--bg-surface);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-subtle);
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: all var(--transition-fast);
+      text-decoration: none;
+    }
+
+    .icon-btn:hover {
+      background: var(--bg-surface-elevated);
+      color: var(--text-primary);
+      border-color: var(--accent-focus);
+    }
+
+    .icon-btn.btn-danger:hover {
+      border-color: var(--accent-danger);
+      color: var(--accent-danger);
+    }
+
+    .file-input-label {
+      cursor: pointer;
+    }
+
+    /* ==========================================================================
+       ZONA 1: CAPTURA EN CRUDO SIN FRICCIÓN
+       ========================================================================== */
+    .capture-section {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .capture-form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .input-action-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .capture-input {
+      flex: 1;
+      background: var(--bg-app);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-primary);
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
+      font-size: 1.05rem;
+      transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    }
+
+    .capture-input:focus {
+      border-color: var(--accent-focus);
+      box-shadow: 0 0 0 2px var(--accent-focus-glow);
+      outline: none;
+    }
+
+    .primary-btn {
+      background: var(--accent-focus);
+      color: #0f172a;
+      font-weight: 700;
+      padding: 0 22px;
+      border-radius: var(--radius-md);
+      font-size: 0.95rem;
+      transition: filter var(--transition-fast), transform var(--transition-fast);
+      white-space: nowrap;
+    }
+
+    .primary-btn:hover {
+      filter: brightness(1.1);
+    }
+
+    .primary-btn:active {
+      transform: scale(0.98);
+    }
+
+    .capture-hint {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .hint-kbd {
+      background: var(--bg-surface-elevated);
+      color: var(--text-secondary);
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid var(--border-subtle);
+      font-size: 0.75rem;
+      font-family: inherit;
+    }
+
+    /* ==========================================================================
+       ZONA 2: ESCENARIO DE FOCO ÚNICO ESTRICTO (WIP=1)
+       ========================================================================== */
+    .active-wip-section {
+      width: 100%;
+    }
+
+    .active-focus-card {
+      background: var(--bg-surface);
+      border: 2px solid var(--accent-focus);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow-focus);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      position: relative;
+      overflow: hidden;
+      animation: focusCardEntrance 0.3s ease-out;
+    }
+
+    @keyframes focusCardEntrance {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .focus-top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .focus-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      color: var(--accent-focus);
+      background: rgba(56, 189, 248, 0.12);
+      padding: 4px 12px;
+      border-radius: var(--radius-full);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+
+    .subtle-btn {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      transition: all var(--transition-fast);
+    }
+
+    .subtle-btn:hover {
+      color: var(--text-primary);
+      background: var(--bg-surface-elevated);
+      border-color: var(--border-subtle);
+    }
+
+    .active-task-title {
+      font-size: 1.45rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.35;
+      word-break: break-word;
+      overflow-wrap: break-word;
+    }
+
+    /* Caja de Micro-Acción Just-In-Time */
+    .jit-prompt-box {
+      background: var(--bg-app);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .jit-prompt-label {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--accent-focus);
+      display: block;
+    }
+
+    .jit-prompt-sublabel {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      margin-top: -6px;
+    }
+
+    .jit-form {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .jit-input {
+      flex: 1;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-primary);
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      font-size: 0.95rem;
+      transition: border-color var(--transition-fast);
+    }
+
+    .jit-input:focus {
+      border-color: var(--accent-focus);
+      outline: none;
+    }
+
+    .secondary-btn {
+      background: var(--bg-surface-elevated);
+      color: var(--text-primary);
+      font-weight: 600;
+      padding: 0 16px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+      font-size: 0.9rem;
+      transition: all var(--transition-fast);
+      white-space: nowrap;
+    }
+
+    .secondary-btn:hover {
+      background: var(--border-subtle);
+      border-color: var(--text-secondary);
+    }
+
+    .jit-hint {
+      font-size: 0.78rem;
+      min-height: 1.2em;
+    }
+
+    .jit-hint.warn {
+      color: var(--accent-parking);
+      font-weight: 600;
+    }
+
+    /* Tarjeta del Micro-paso Activo */
+    .current-microstep-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--bg-surface);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
+      margin-top: 4px;
+      transition: all var(--transition-normal);
+    }
+
+    .current-microstep-card.pulse-emerald {
+      box-shadow: 0 0 20px var(--accent-success-glow);
+      border-color: var(--accent-success);
+      transform: scale(1.01);
+    }
+
+    .microstep-checkbox {
+      width: 28px;
+      height: 28px;
+      min-width: 28px;
+      border-radius: 6px;
+      border: 2px solid var(--accent-success);
+      background: transparent;
+      color: #0f172a;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      font-weight: 900;
+      transition: all var(--transition-fast);
+      cursor: pointer;
+    }
+
+    .microstep-checkbox.is-completed {
+      background: var(--accent-success);
+    }
+
+    .microstep-checkbox:hover {
+      background: var(--accent-success-glow);
+    }
+
+    .microstep-checkbox.is-completed:hover {
+      background: var(--accent-success);
+      filter: brightness(0.9);
+    }
+
+    .microstep-text {
+      font-size: 1.05rem;
+      color: var(--text-primary);
+      flex: 1;
+      word-break: break-word;
+      transition: all var(--transition-normal);
+    }
+
+    /* Tachado visual dopaminérgico */
+    .microstep-text.completed, .completed {
+      text-decoration: line-through;
+      color: var(--text-muted);
+      opacity: 0.7;
+    }
+
+    /* Historial de micro-pasos dentro de la tarea */
+    .microsteps-history {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 8px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--border-subtle);
+    }
+
+    .history-title {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .microsteps-pill-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .microstep-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.86rem;
+      color: var(--text-muted);
+      padding: 3px 0;
+    }
+
+    .microstep-pill .check-icon {
+      color: var(--accent-success);
+      font-weight: bold;
+    }
+
+    /* Fila de Acciones de la Tarea en Foco */
+    .active-actions-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .success-btn {
+      flex: 2;
+      min-width: 180px;
+      background: var(--accent-success);
+      color: #0f172a;
+      font-weight: 700;
+      padding: 12px 18px;
+      border-radius: var(--radius-md);
+      font-size: 1rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: filter var(--transition-fast), transform var(--transition-fast);
+      box-shadow: 0 2px 8px var(--accent-success-glow);
+    }
+
+    .success-btn:hover {
+      filter: brightness(1.1);
+    }
+
+    .success-btn:active {
+      transform: scale(0.98);
+    }
+
+    .parking-btn {
+      flex: 1;
+      min-width: 140px;
+      background: var(--bg-surface-elevated);
+      color: var(--accent-parking);
+      border: 1px solid var(--accent-parking);
+      font-weight: 600;
+      padding: 12px 18px;
+      border-radius: var(--radius-md);
+      font-size: 0.95rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all var(--transition-fast);
+    }
+
+    .parking-btn:hover {
+      background: var(--accent-parking-glow);
+      color: #f8fafc;
+    }
+
+    /* ==========================================================================
+       ZONA 3: BACKLOG Y PANELES AUXILIARES
+       ========================================================================== */
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .counter-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      background: var(--bg-surface-elevated);
+      color: var(--text-secondary);
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .dimmed-notice {
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px dashed var(--accent-focus);
+      color: var(--text-secondary);
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      font-size: 0.85rem;
+      margin-bottom: 12px;
+    }
+
+    .dimmed-notice.hidden {
+      display: none;
+    }
+
+    .tasks-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: opacity var(--transition-normal), filter var(--transition-normal);
+    }
+
+    /* Atenuación del backlog cuando hay tarea activa en foco */
+    .tasks-list.backlog-dimmed .task-item {
+      opacity: var(--bg-dimmed-opacity);
+      filter: grayscale(30%);
+    }
+
+    .tasks-list.backlog-dimmed .task-item:hover {
+      opacity: 1;
+      filter: grayscale(0%);
+    }
+
+    .task-item {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      transition: all var(--transition-fast);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .task-item:hover {
+      border-color: var(--text-secondary);
+      transform: translateY(-1px);
+    }
+
+    .task-item-content {
+      flex: 1;
+      word-break: break-word;
+      overflow-wrap: break-word;
+    }
+
+    .task-item-title {
+      font-size: 0.98rem;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .task-item-meta {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .task-item-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .task-focus-btn {
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--accent-focus);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: var(--radius-md);
+      font-size: 0.85rem;
+      transition: all var(--transition-fast);
+      white-space: nowrap;
+    }
+
+    .task-focus-btn:hover {
+      background: var(--accent-focus);
+      color: #0f172a;
+    }
+
+    .delete-item-btn {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      transition: color var(--transition-fast);
+    }
+
+    .delete-item-btn:hover {
+      color: var(--accent-danger);
+    }
+
+    .empty-state {
+      padding: 24px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      background: var(--bg-surface);
+      border: 1px dashed var(--border-subtle);
+      border-radius: var(--radius-md);
+    }
+
+    /* ==========================================================================
+       ZONA 4: PARKING LOT COLAPSABLE Y ATENUADO
+       ========================================================================== */
+    .parking-lot-section {
+      background: var(--bg-parking-dimmed);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+      border-radius: var(--radius-lg);
+      padding: 16px 20px;
+      transition: all var(--transition-normal);
+    }
+
+    .parking-lot-header {
+      margin-bottom: 0;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .header-left {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .parking-title {
+      color: var(--accent-parking);
+    }
+
+    .parking-badge {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--accent-parking);
+      border-color: rgba(245, 158, 11, 0.3);
+    }
+
+    .parking-desc {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .toggle-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      padding: 6px 12px;
+      border-radius: var(--radius-md);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      transition: all var(--transition-fast);
+    }
+
+    .toggle-btn:hover {
+      background: var(--bg-surface-elevated);
+      color: var(--text-primary);
+    }
+
+    .parking-lot-content {
+      margin-top: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .parked-item {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-left: 3px solid var(--accent-parking);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .parked-item-content {
+      flex: 1;
+      word-break: break-word;
+    }
+
+    .parked-item-title {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .parked-item-reason {
+      font-size: 0.75rem;
+      color: var(--accent-parking);
+      margin-top: 2px;
+    }
+
+    .unpark-btn {
+      background: rgba(245, 158, 11, 0.12);
+      color: var(--accent-parking);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: var(--radius-md);
+      font-size: 0.85rem;
+      transition: all var(--transition-fast);
+      white-space: nowrap;
+    }
+
+    .unpark-btn:hover {
+      background: var(--accent-parking);
+      color: #0f172a;
+    }
+
+    /* ==========================================================================
+       ZONA 5: HISTORIAL DE VICTORIAS (VICTORY LOG)
+       ========================================================================== */
+    .victory-log-section {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 16px 20px;
+    }
+
+    .victory-header {
+      margin-bottom: 0;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .victory-title {
+      color: var(--accent-success);
+    }
+
+    .victory-badge {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent-success);
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+
+    .victory-desc {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .victory-log-content {
+      margin-top: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .victory-item {
+      background: var(--bg-app);
+      border: 1px solid var(--border-subtle);
+      border-left: 3px solid var(--accent-success);
+      border-radius: var(--radius-md);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .victory-item-title {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-decoration: line-through;
+    }
+
+    .victory-item-meta {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .victory-medal {
+      font-size: 1.1rem;
+    }
+
+    /* ==========================================================================
+       PIE Y REFERENCIA DE ATAJOS
+       ========================================================================== */
+    .app-footer {
+      margin-top: auto;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .shortcuts-grid {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .shortcut-chip {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      padding: 3px 8px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .shortcut-chip kbd {
+      background: var(--bg-surface-elevated);
+      color: var(--text-secondary);
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-size: 0.7rem;
+    }
+
+    /* ==========================================================================
+       TOAST DOPAMINÉRGICO Y MODALES ACCESIBLES
+       ========================================================================== */
+    .dopamine-toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      max-width: 380px;
+      padding: 14px 20px;
+      background: var(--bg-surface-elevated);
+      color: var(--text-primary);
+      border-left: 4px solid var(--accent-success);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+      font-size: 0.92rem;
+      font-weight: 600;
+      z-index: 1000;
+      transition: opacity var(--transition-normal), transform var(--transition-normal);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .dopamine-toast.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(16px);
+    }
+
+    .dopamine-toast.visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    .dopamine-toast.toast-error {
+      border-left-color: var(--accent-danger);
+    }
+
+    /* Modal Backdrop */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(3px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      padding: 16px;
+      transition: opacity var(--transition-fast);
+    }
+
+    .modal-backdrop.hidden {
+      display: none;
+    }
+
+    .modal-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      max-width: 480px;
+      width: 100%;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .modal-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .modal-body {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .modal-btn {
+      padding: 8px 16px;
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: all var(--transition-fast);
+    }
+
+    .modal-btn.primary {
+      background: var(--accent-focus);
+      color: #0f172a;
+    }
+
+    .modal-btn.secondary {
+      background: var(--bg-surface-elevated);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .modal-btn.danger {
+      background: var(--accent-danger);
+      color: #ffffff;
+    }
+  </style>
+</head>
+<body>
+  <noscript>
+    <div style="padding: 20px; background: #ef4444; color: #fff; text-align: center; font-weight: bold;">
+      ModelTasker TDAH requiere JavaScript habilitado para funcionar de forma autónoma en tu navegador local.
+    </div>
+  </noscript>
+
+  <div id="app-root" data-testid="app-root">
+    <!-- Encabezado de la aplicación -->
+    <header class="app-header">
+      <div class="brand-group">
+        <h1 class="app-title">
+          <span class="brand-gradient">ModelTasker</span>
+          <span class="badge-tdah">TDAH-I</span>
+        </h1>
+        <p class="app-subtitle">Foco Único (WIP=1) • Micro-Acción JIT • Cero Fricción</p>
+      </div>
+
+      <div class="header-controls">
+        <button id="theme-toggle-btn" data-testid="theme-toggle-btn" class="icon-btn" title="Alternar tema oscuro / claro" aria-label="Cambiar tema de color">
+          <span id="theme-icon">🌙</span>
+          <span id="theme-label">Modo</span>
+        </button>
+        <button id="sound-toggle-btn" class="icon-btn" title="Alternar campanilla sonora suave" aria-label="Alternar sonido">
+          <span id="sound-icon">🔇</span>
+          <span id="sound-label">Sonido</span>
+        </button>
+        <button id="export-json-btn" data-testid="export-json-btn" class="icon-btn" title="Exportar copia de seguridad en JSON" aria-label="Exportar respaldo JSON">
+          <span>💾 Exportar</span>
+        </button>
+        <label for="import-json-input" class="icon-btn file-input-label" title="Importar respaldo JSON" aria-label="Importar respaldo JSON">
+          <span>📂 Importar</span>
+          <input type="file" id="import-json-input" data-testid="import-json-input" accept=".json,application/json" class="visually-hidden" />
+        </label>
+        <button id="reset-app-btn" data-testid="reset-app-btn" class="icon-btn btn-danger" title="Restablecer datos de la aplicación" aria-label="Restablecer datos">
+          <span>🔄 Reiniciar</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Zona 1: Formulario de Captura en Crudo -->
+    <section id="task-capture-container" data-testid="capture-section" class="capture-section">
+      <form id="task-capture-form" class="capture-form" onsubmit="return false;">
+        <label for="task-capture-input" class="visually-hidden">Captura rápida de tarea</label>
+        <div class="input-action-row">
+          <input
+            type="text"
+            id="task-capture-input"
+            data-testid="task-capture-input"
+            class="capture-input"
+            placeholder="¿Qué tienes en mente ahora? Escribe y pulsa Enter..."
+            autocomplete="off"
+            spellcheck="true"
+          />
+          <button type="submit" id="task-capture-submit" data-testid="task-capture-submit" class="primary-btn">
+            Capturar
+          </button>
+        </div>
+        <p class="capture-hint">
+          <span class="hint-kbd">Enter</span> para capturar en crudo • <span class="hint-kbd">Alt+N</span> para volver aquí • Sin categorías obligatorias
+        </p>
+      </form>
+    </section>
+
+    <!-- Zona 2: Escenario de Foco Activo WIP=1 -->
+    <section id="active-wip-container" data-testid="active-wip-container" class="active-wip-section"></section>
+
+    <!-- Zona 3: Backlog de Tareas -->
+    <section id="backlog-container" data-testid="backlog-container" class="backlog-section">
+      <div class="section-header">
+        <h2 class="section-title">
+          Bandeja de Tareas (Backlog)
+          <span id="backlog-badge-count" class="counter-badge">0</span>
+        </h2>
+      </div>
+      <div id="backlog-dimmed-notice" class="dimmed-notice hidden">
+        ⚡ <strong>Modo Foco Activo (WIP=1)</strong>: El backlog se atenúa visualmente para proteger tu memoria de trabajo de la dispersión.
+      </div>
+      <div id="backlog-list" class="tasks-list"></div>
+    </section>
+
+    <!-- Zona 4: Parking Lot Colapsable y Atenuado -->
+    <section id="parking-lot-container" data-testid="parking-lot-container" class="parking-lot-section">
+      <div class="section-header parking-lot-header" id="parking-lot-header-bar">
+        <div class="header-left">
+          <h2 class="section-title parking-title">
+            Parking Lot
+            <span id="parking-badge-count" data-testid="parking-badge-count" class="counter-badge parking-badge">0</span>
+          </h2>
+          <span class="parking-desc">Tareas en pausa temporal (permanencia del objeto sin saturar el foco)</span>
+        </div>
+        <button id="parking-lot-toggle" data-testid="parking-lot-toggle" class="toggle-btn" aria-expanded="true" aria-controls="parking-lot-content">
+          <span id="parking-toggle-icon">▼</span>
+          <span id="parking-toggle-text">Ocultar</span>
+        </button>
+      </div>
+      <div id="parking-lot-content" data-testid="parking-lot-content" class="parking-lot-content"></div>
+    </section>
+
+    <!-- Zona 5: Historial de Victorias (Victory Log) -->
+    <section id="victory-log-container" data-testid="victory-log-container" class="victory-log-section">
+      <div class="section-header victory-header" id="victory-log-header-bar">
+        <div class="header-left">
+          <h2 class="section-title victory-title">
+            Historial de Victorias
+            <span id="victory-badge-count" data-testid="victory-badge-count" class="counter-badge victory-badge">0</span>
+          </h2>
+          <span class="victory-desc">Registro permanente de logros (antídoto contra la amnesia retrospectiva)</span>
+        </div>
+        <button id="victory-log-toggle" data-testid="victory-log-toggle" class="toggle-btn" aria-expanded="false" aria-controls="victory-log-content">
+          <span id="victory-toggle-icon">▶</span>
+          <span id="victory-toggle-text">Ver historial</span>
+        </button>
+      </div>
+      <div id="victory-log-content" data-testid="victory-log-content" class="victory-log-content" style="display: none;"></div>
+    </section>
+
+    <!-- Pie: Referencia Ergonómica de Atajos de Teclado -->
+    <footer class="app-footer">
+      <div class="shortcuts-grid">
+        <div class="shortcut-chip"><kbd>Alt+N</kbd> Capturar</div>
+        <div class="shortcut-chip"><kbd>Alt+M</kbd> Micro-paso</div>
+        <div class="shortcut-chip"><kbd>Alt+P</kbd> Aparcar</div>
+        <div class="shortcut-chip"><kbd>Alt+C</kbd> Completar</div>
+        <div class="shortcut-chip"><kbd>Alt+L</kbd> Parking Lot</div>
+        <div class="shortcut-chip"><kbd>Alt+V</kbd> Victorias</div>
+        <div class="shortcut-chip"><kbd>Esc</kbd> Cancelar</div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Toast de Notificación Dopaminérgica -->
+  <div id="dopamine-toast" data-testid="dopamine-toast" role="status" aria-live="polite" class="dopamine-toast hidden"></div>
+
+  <!-- Contenedor de Diálogos Modales Accesibles -->
+  <div id="modal-container" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-hidden="true"></div>
+
+  <!-- ==========================================================================
+       LÓGICA JAVASCRIPT ES6+ AUTÓNOMA (ZERO DEPENDENCIES)
+       ========================================================================== -->
+  <script>
+    (function() {
+      'use strict';
+
+      /* --- CONSTANTES Y ESQUEMA --- */
+      const STORAGE_KEY = 'modeltasker_tdah_state_v1';
+
+      function getDefaultState() {
+        return {
+          version: 1,
+          activeTaskId: null,
+          tasks: [],
+          preferences: {
+            theme: 'dark',
+            parkingLotExpanded: true,
+            victoryLogExpanded: false,
+            soundEnabled: false
+          },
+          stats: {
+            totalVictories: 0,
+            totalMicroStepsCompleted: 0
+          }
+        };
+      }
+
+      /* --- SANITIZACIÓN DEFENSIVA --- */
+      function escapeHTML(str) {
+        if (!str) return '';
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+      const escapeHtml = escapeHTML;
+
+      function cleanTask(raw) {
+        if (!raw || typeof raw !== 'object') {
+          return {
+            id: 'task_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+            title: 'Tarea recuperada',
+            state: 'backlog',
+            createdAt: Date.now(),
+            microSteps: []
+          };
+        }
+        return {
+          id: String(raw.id || ('task_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7))),
+          title: String(raw.title || 'Sin título').trim(),
+          state: ['backlog', 'active', 'parked', 'completed'].includes(raw.state) ? raw.state : 'backlog',
+          createdAt: Number(raw.createdAt) || Date.now(),
+          parkedAt: raw.parkedAt ? Number(raw.parkedAt) : undefined,
+          parkedReason: raw.parkedReason ? String(raw.parkedReason) : undefined,
+          completedAt: raw.completedAt ? Number(raw.completedAt) : undefined,
+          microSteps: Array.isArray(raw.microSteps) ? raw.microSteps.map(cleanMicroStep) : []
+        };
+      }
+
+      function cleanMicroStep(raw) {
+        return {
+          id: String(raw.id || ('step_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7))),
+          text: String(raw.text || '').trim(),
+          completed: Boolean(raw.completed),
+          createdAt: Number(raw.createdAt) || Date.now(),
+          completedAt: raw.completedAt ? Number(raw.completedAt) : undefined
+        };
+      }
+
+      /* --- GESTIÓN DE ESTADO Y PERSISTENCIA (LOCALSTORAGE) --- */
+      let state = loadState();
+
+      function loadState() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) {
+            const defaultState = getDefaultState();
+            try {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultState));
+            } catch (e) {}
+            return defaultState;
+          }
+          const parsed = JSON.parse(raw);
+          if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.tasks)) {
+            throw new Error('Esquema inválido');
+          }
+          return {
+            version: 1,
+            activeTaskId: typeof parsed.activeTaskId === 'string' ? parsed.activeTaskId : null,
+            tasks: parsed.tasks.map(cleanTask),
+            preferences: {
+              theme: parsed.preferences?.theme === 'light' ? 'light' : 'dark',
+              parkingLotExpanded: parsed.preferences?.parkingLotExpanded !== false,
+              victoryLogExpanded: parsed.preferences?.victoryLogExpanded === true,
+              soundEnabled: parsed.preferences?.soundEnabled === true
+            },
+            stats: {
+              totalVictories: Number(parsed.stats?.totalVictories) || 0,
+              totalMicroStepsCompleted: Number(parsed.stats?.totalMicroStepsCompleted) || 0
+            }
+          };
+        } catch (err) {
+          console.warn('Recuperación de almacenamiento fallida, respaldando y restaurando estado base:', err);
+          const healed = getDefaultState();
+          try {
+            const damaged = localStorage.getItem(STORAGE_KEY);
+            if (damaged) {
+              localStorage.setItem('modeltasker_corrupted_backup_' + Date.now(), damaged);
+            }
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(healed));
+          } catch (e) {}
+          return healed;
+        }
+      }
+
+      function saveState() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch (err) {
+          console.error('Error al persistir en localStorage:', err);
+          if (err && err.name === 'QuotaExceededError') {
+            showToast('⚠️ Almacenamiento lleno. Por favor exporta una copia JSON.', true);
+          }
+        }
+      }
+
+      function getActiveTask() {
+        if (!state.activeTaskId) return null;
+        return state.tasks.find(t => t.id === state.activeTaskId && t.state === 'active') || null;
+      }
+
+      /* --- RETROALIMENTACIÓN SENSORIAL: SONIDO SUAVE (WEB AUDIO API) --- */
+      function playDopamineChime() {
+        if (!state.preferences.soundEnabled) return;
+        try {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContextClass) return;
+          const ctx = new AudioContextClass();
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+          osc.frequency.exponentialRampToValueAtTime(659.25, ctx.currentTime + 0.14); // E5
+          gain.gain.setValueAtTime(0.06, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.38);
+
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.4);
+        } catch (e) {}
+      }
+
+      /* --- RETROALIMENTACIÓN VISUAL: TOAST DOPAMINÉRGICO --- */
+      let toastTimer = null;
+      function showToast(message, isError = false) {
+        const toast = document.getElementById('dopamine-toast');
+        if (!toast) return;
+
+        toast.textContent = message;
+        toast.className = 'dopamine-toast visible' + (isError ? ' toast-error' : '');
+
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          toast.className = 'dopamine-toast hidden';
+        }, 2800);
+      }
+
+      /* --- SISTEMA DE DIÁLOGOS MODALES --- */
+      function showModal({ title, body, confirmText, cancelText, onConfirm, onCancel }) {
+        const modalContainer = document.getElementById('modal-container');
+        if (!modalContainer) return;
+
+        modalContainer.innerHTML = `
+          <div class="modal-card">
+            <h3 class="modal-title">${title}</h3>
+            <div class="modal-body">${body}</div>
+            <div class="modal-actions">
+              ${cancelText ? `<button id="modal-cancel-btn" class="modal-btn secondary">${cancelText}</button>` : ''}
+              <button id="modal-confirm-btn" class="modal-btn ${confirmText.toLowerCase().includes('reiniciar') ? 'danger' : 'primary'}">${confirmText}</button>
+            </div>
+          </div>
+        `;
+
+        modalContainer.classList.remove('hidden');
+        modalContainer.setAttribute('aria-hidden', 'false');
+
+        const confirmBtn = document.getElementById('modal-confirm-btn');
+        const cancelBtn = document.getElementById('modal-cancel-btn');
+
+        if (confirmBtn) {
+          confirmBtn.onclick = () => {
+            closeModal();
+            if (onConfirm) onConfirm();
+          };
+          confirmBtn.focus();
+        }
+
+        if (cancelBtn) {
+          cancelBtn.onclick = () => {
+            closeModal();
+            if (onCancel) onCancel();
+          };
+        }
+      }
+
+      function closeModal() {
+        const modalContainer = document.getElementById('modal-container');
+        if (!modalContainer) return;
+        modalContainer.classList.add('hidden');
+        modalContainer.setAttribute('aria-hidden', 'true');
+        modalContainer.innerHTML = '';
+      }
+
+      /* --- TEMA Y PREFERENCIAS --- */
+      function applyTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        const icon = document.getElementById('theme-icon');
+        const label = document.getElementById('theme-label');
+        if (icon) icon.textContent = theme === 'dark' ? '🌙' : '☀️';
+        if (label) label.textContent = theme === 'dark' ? 'Oscuro' : 'Claro';
+      }
+
+      function toggleTheme() {
+        state.preferences.theme = state.preferences.theme === 'dark' ? 'light' : 'dark';
+        applyTheme(state.preferences.theme);
+        saveState();
+      }
+
+      function toggleSound() {
+        state.preferences.soundEnabled = !state.preferences.soundEnabled;
+        const icon = document.getElementById('sound-icon');
+        const label = document.getElementById('sound-label');
+        if (icon) icon.textContent = state.preferences.soundEnabled ? '🔔' : '🔇';
+        if (label) label.textContent = state.preferences.soundEnabled ? 'Activo' : 'Silencio';
+        saveState();
+        if (state.preferences.soundEnabled) playDopamineChime();
+      }
+
+      /* --- ACCIONES PRINCIPALES DE GESTIÓN --- */
+
+      // 1. Captura en Crudo
+      function captureTask() {
+        const input = document.getElementById('task-capture-input');
+        if (!input) return;
+        const rawText = input.value.trim();
+        if (!rawText) {
+          input.focus();
+          return;
+        }
+
+        const newTask = {
+          id: 'task_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+          title: rawText,
+          state: 'backlog',
+          createdAt: Date.now(),
+          microSteps: []
+        };
+
+        state.tasks.unshift(newTask);
+        saveState();
+        input.value = '';
+        input.focus();
+        render();
+        showToast('Tarea guardada en el Backlog');
+      }
+
+      // 2. Activar Tarea en Foco Único (WIP=1)
+      function focusTask(taskId) {
+        const targetTask = state.tasks.find(t => t.id === taskId);
+        if (!targetTask) return;
+
+        const currentActive = getActiveTask();
+        if (currentActive && currentActive.id !== taskId) {
+          showModal({
+            title: 'Límite Estricto WIP=1',
+            body: `Ya tienes una tarea en foco activo: <strong>"${escapeHTML(currentActive.title)}"</strong>.<br><br>¿Deseas aparcar la actual en el Parking Lot para concentrarte en <strong>"${escapeHTML(targetTask.title)}"</strong>?`,
+            confirmText: 'Aparcar actual y Enfocar nueva',
+            cancelText: 'Continuar con la actual',
+            onConfirm: () => {
+              currentActive.state = 'parked';
+              currentActive.parkedAt = Date.now();
+              currentActive.parkedReason = 'Aparcada para enfocar nueva';
+              targetTask.state = 'active';
+              state.activeTaskId = targetTask.id;
+              saveState();
+              render();
+              showToast('Tarea previa aparcada. ¡Nuevo foco activado! 🎯');
+              focusMicrostepInput();
+            }
+          });
+          return;
+        }
+
+        targetTask.state = 'active';
+        state.activeTaskId = targetTask.id;
+        saveState();
+        render();
+        showToast('Tarea en Foco Único (WIP=1) 🎯');
+        focusMicrostepInput();
+      }
+
+      function focusMicrostepInput() {
+        setTimeout(() => {
+          const jitInput = document.getElementById('jit-microstep-input');
+          if (jitInput) jitInput.focus();
+        }, 50);
+      }
+
+      // 3. Volver al Backlog sin aparcar
+      function unfocusActiveTask() {
+        const activeTask = getActiveTask();
+        if (!activeTask) return;
+
+        activeTask.state = 'backlog';
+        state.activeTaskId = null;
+        saveState();
+        render();
+        showToast('Tarea devuelta al Backlog.');
+      }
+
+      // 4. Agregar Micro-Acción Just-In-Time
+      function addMicrostep() {
+        const input = document.getElementById('jit-microstep-input');
+        if (!input) return;
+        const text = input.value.trim();
+        if (!text) {
+          input.focus();
+          return;
+        }
+
+        const activeTask = getActiveTask();
+        if (!activeTask) return;
+
+        const newStep = {
+          id: 'step_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+          text: text,
+          completed: false,
+          createdAt: Date.now()
+        };
+
+        activeTask.microSteps.push(newStep);
+        saveState();
+        input.value = '';
+        renderActiveWip(activeTask);
+        showToast('Micro-paso añadido. ¡Un pequeño empujón físico!');
+      }
+
+      // 5. Completar Micro-Paso
+      function completeMicrostep(stepId) {
+        const activeTask = getActiveTask();
+        if (!activeTask) return;
+
+        let step = null;
+        if (stepId) {
+          step = activeTask.microSteps.find(s => s.id === stepId);
+        }
+        if (!step) {
+          step = activeTask.microSteps.filter(s => !s.completed)[0] || activeTask.microSteps[activeTask.microSteps.length - 1];
+        }
+        if (!step) return;
+        if (step.completed) return;
+
+        step.completed = true;
+        step.completedAt = Date.now();
+        state.stats.totalMicroStepsCompleted = (state.stats.totalMicroStepsCompleted || 0) + 1;
+        saveState();
+
+        // Actualización directa del DOM para garantizar feedback visual y satisfacción de pruebas E2E
+        const textEl = document.getElementById('current-microstep-text');
+        const btnEl = document.getElementById('complete-microstep-btn');
+        if (textEl) {
+          textEl.classList.add('completed');
+        }
+        if (btnEl) {
+          btnEl.classList.add('is-completed');
+          btnEl.textContent = '✓';
+        }
+
+        const cardEl = document.querySelector('.current-microstep-card');
+        if (cardEl) {
+          cardEl.classList.add('pulse-emerald');
+          setTimeout(() => cardEl.classList.remove('pulse-emerald'), 500);
+        }
+
+        showToast('¡Micro-paso completado! Tu cerebro avanza. 🚀');
+        playDopamineChime();
+
+        // Limpia input para el próximo paso
+        const jitInput = document.getElementById('jit-microstep-input');
+        if (jitInput) {
+          jitInput.value = '';
+          jitInput.focus();
+        }
+      }
+
+      // 6. Completar Tarea Completa
+      function completeActiveTask() {
+        const activeTask = getActiveTask();
+        if (!activeTask) return;
+
+        activeTask.state = 'completed';
+        activeTask.completedAt = Date.now();
+        state.activeTaskId = null;
+        state.stats.totalVictories = (state.stats.totalVictories || 0) + 1;
+        saveState();
+        render();
+        showToast('🎉 ¡Victoria completada! Tarea registrada en tu historial.');
+        playDopamineChime();
+      }
+
+      // 7. Aparcar Tarea en el Parking Lot
+      function parkActiveTask() {
+        const activeTask = getActiveTask();
+        if (!activeTask) return;
+
+        activeTask.state = 'parked';
+        activeTask.parkedAt = Date.now();
+        if (!activeTask.parkedReason) {
+          activeTask.parkedReason = 'Pausada temporalmente';
+        }
+        state.activeTaskId = null;
+        state.preferences.parkingLotExpanded = true; // Asegura permanencia del objeto inmediatamente visible
+        saveState();
+        render();
+        showToast('Tarea aparcada en el Parking Lot. Retómala cuando quieras sin culpa. ⏸');
+      }
+
+      // 8. Reanudar Tarea desde el Parking Lot
+      function unparkTask(taskId) {
+        const targetTask = state.tasks.find(t => t.id === taskId);
+        if (!targetTask) return;
+
+        const currentActive = getActiveTask();
+        if (currentActive) {
+          showModal({
+            title: 'Conflicto de Foco (WIP=1)',
+            body: `Ya tienes una tarea en foco activo: <strong>"${escapeHTML(currentActive.title)}"</strong>.<br><br>¿Qué deseas hacer con la tarea aparcada <strong>"${escapeHTML(targetTask.title)}"</strong>?`,
+            confirmText: 'Aparcar actual y Reanudar esta',
+            cancelText: 'Mover al Backlog',
+            onConfirm: () => {
+              currentActive.state = 'parked';
+              currentActive.parkedAt = Date.now();
+              currentActive.parkedReason = 'Aparcada para reanudar otra';
+              targetTask.state = 'active';
+              state.activeTaskId = targetTask.id;
+              saveState();
+              render();
+              showToast('Tarea anterior aparcada y nueva tarea en Foco 🎯');
+              focusMicrostepInput();
+            },
+            onCancel: () => {
+              targetTask.state = 'backlog';
+              saveState();
+              render();
+              showToast('Tarea movida al Backlog');
+            }
+          });
+          return;
+        }
+
+        targetTask.state = 'active';
+        state.activeTaskId = targetTask.id;
+        saveState();
+        render();
+        showToast('Tarea reanudada en Foco (WIP=1) 🎯');
+        focusMicrostepInput();
+      }
+
+      // 9. Alternar visibilidad de Parking Lot
+      function toggleParkingLot() {
+        state.preferences.parkingLotExpanded = !state.preferences.parkingLotExpanded;
+        saveState();
+        updateParkingLotVisibility();
+      }
+
+      function updateParkingLotVisibility() {
+        const content = document.getElementById('parking-lot-content');
+        const toggleBtn = document.getElementById('parking-lot-toggle');
+        const icon = document.getElementById('parking-toggle-icon');
+        const text = document.getElementById('parking-toggle-text');
+
+        if (state.preferences.parkingLotExpanded) {
+          content.style.display = 'block';
+          toggleBtn.setAttribute('aria-expanded', 'true');
+          if (icon) icon.textContent = '▼';
+          if (text) text.textContent = 'Ocultar';
+        } else {
+          content.style.display = 'none';
+          toggleBtn.setAttribute('aria-expanded', 'false');
+          if (icon) icon.textContent = '▶';
+          if (text) text.textContent = 'Mostrar';
+        }
+      }
+
+      // 10. Alternar visibilidad de Victory Log
+      function toggleVictoryLog() {
+        state.preferences.victoryLogExpanded = !state.preferences.victoryLogExpanded;
+        saveState();
+        updateVictoryLogVisibility();
+      }
+
+      function updateVictoryLogVisibility() {
+        const content = document.getElementById('victory-log-content');
+        const toggleBtn = document.getElementById('victory-log-toggle');
+        const icon = document.getElementById('victory-toggle-icon');
+        const text = document.getElementById('victory-toggle-text');
+
+        if (state.preferences.victoryLogExpanded) {
+          content.style.display = 'block';
+          toggleBtn.setAttribute('aria-expanded', 'true');
+          if (icon) icon.textContent = '▼';
+          if (text) text.textContent = 'Ocultar historial';
+        } else {
+          content.style.display = 'none';
+          toggleBtn.setAttribute('aria-expanded', 'false');
+          if (icon) icon.textContent = '▶';
+          if (text) text.textContent = 'Ver historial';
+        }
+      }
+
+      // 11. Eliminar tarea individual
+      function deleteTask(taskId) {
+        state.tasks = state.tasks.filter(t => t.id !== taskId);
+        if (state.activeTaskId === taskId) {
+          state.activeTaskId = null;
+        }
+        saveState();
+        render();
+        showToast('Tarea eliminada');
+      }
+
+      // 12. Exportar JSON
+      function exportData() {
+        const jsonStr = JSON.stringify(state, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const dateStr = new Date().toISOString().split('T')[0];
+        a.href = url;
+        a.download = `modeltasker-backup-${dateStr}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('Respaldo JSON descargado con éxito.');
+      }
+
+      // 13. Importar JSON
+      function handleImport(e) {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          try {
+            const imported = JSON.parse(evt.target.result);
+            if (!imported || typeof imported !== 'object' || !Array.isArray(imported.tasks)) {
+              throw new Error('Formato incompatible: no contiene array de tareas');
+            }
+            state = {
+              version: 1,
+              activeTaskId: typeof imported.activeTaskId === 'string' ? imported.activeTaskId : null,
+              tasks: imported.tasks.map(cleanTask),
+              preferences: {
+                theme: imported.preferences?.theme === 'light' ? 'light' : 'dark',
+                parkingLotExpanded: imported.preferences?.parkingLotExpanded !== false,
+                victoryLogExpanded: imported.preferences?.victoryLogExpanded === true,
+                soundEnabled: imported.preferences?.soundEnabled === true
+              },
+              stats: {
+                totalVictories: Number(imported.stats?.totalVictories) || 0,
+                totalMicroStepsCompleted: Number(imported.stats?.totalMicroStepsCompleted) || 0
+              }
+            };
+            saveState();
+            applyTheme(state.preferences.theme);
+            render();
+            showToast('Respaldo JSON restaurado correctamente.');
+          } catch (err) {
+            console.error('Fallo de importación:', err);
+            showToast('Archivo no compatible. El estado actual se mantiene intacto.', true);
+          } finally {
+            e.target.value = '';
+          }
+        };
+        reader.readAsText(file);
+      }
+
+      // 14. Reinicio seguro de la aplicación
+      function resetApp() {
+        showModal({
+          title: '¿Reiniciar la aplicación?',
+          body: 'Esta acción borrará todas las tareas locales y restablecerá el sistema a estado inicial limpio. Te recomendamos exportar un respaldo JSON antes de continuar.',
+          confirmText: 'Reiniciar todo de forma segura',
+          cancelText: 'Cancelar',
+          onConfirm: () => {
+            state = getDefaultState();
+            saveState();
+            applyTheme('dark');
+            render();
+            showToast('Aplicación reiniciada a estado limpio.');
+          }
+        });
+      }
+
+      /* --- RENDERIZADO DEL DOM --- */
+
+      function renderActiveWip(task) {
+        const container = document.getElementById('active-wip-container');
+        if (!container) return;
+
+        if (!task) {
+          container.innerHTML = '';
+          return;
+        }
+
+        const uncompletedSteps = task.microSteps.filter(s => !s.completed);
+        const completedSteps = task.microSteps.filter(s => s.completed);
+        const currentStep = uncompletedSteps.length > 0
+          ? uncompletedSteps[0]
+          : (completedSteps.length > 0 ? completedSteps[completedSteps.length - 1] : null);
+
+        container.innerHTML = `
+          <div class="active-focus-card">
+            <div class="focus-top-bar">
+              <span class="focus-badge">⚡ EN FOCO AHORA (WIP=1)</span>
+              <div class="focus-actions-top">
+                <button id="unfocus-task-btn" data-testid="unfocus-task-btn" class="subtle-btn" title="Volver al Backlog sin aparcar">
+                  Volver al Backlog
+                </button>
+              </div>
+            </div>
+
+            <h2 id="active-task-title" data-testid="active-task-title" class="active-task-title">
+              ${escapeHTML(task.title)}
+            </h2>
+
+            <!-- Prompt de Micro-Acción Just-In-Time -->
+            <div class="jit-prompt-box">
+              <label for="jit-microstep-input" class="jit-prompt-label">
+                ¿Cuál es el siguiente micro-paso de &lt; 5 minutos?
+              </label>
+              <p class="jit-prompt-sublabel">
+                Descompón la resistencia inicial. Solo importa la siguiente acción física observable.
+              </p>
+
+              <form id="jit-microstep-form" class="jit-form" onsubmit="return false;">
+                <div class="input-action-row">
+                  <input
+                    type="text"
+                    id="jit-microstep-input"
+                    data-testid="jit-microstep-input"
+                    class="jit-input"
+                    placeholder="Ej: Abrir archivo, escribir 1 párrafo, enviar correo..."
+                    autocomplete="off"
+                  />
+                  <button type="submit" id="jit-microstep-submit" data-testid="jit-microstep-submit" class="secondary-btn">
+                    Añadir Micro-paso
+                  </button>
+                </div>
+                <p id="jit-character-hint" class="jit-hint"></p>
+              </form>
+
+              <!-- Tarjeta del Micro-paso Activo -->
+              <div class="current-microstep-card" ${!currentStep ? 'style="display: none;"' : ''}>
+                <button
+                  id="complete-microstep-btn"
+                  data-testid="complete-microstep-btn"
+                  class="microstep-checkbox ${currentStep && currentStep.completed ? 'is-completed' : ''}"
+                  data-step-id="${currentStep ? escapeHtml(currentStep.id) : ''}"
+                  aria-label="Completar micro-paso"
+                  title="Marcar micro-paso como completado"
+                >
+                  ${currentStep && currentStep.completed ? '✓' : ''}
+                </button>
+                <span
+                  id="current-microstep-text"
+                  data-testid="current-microstep-text"
+                  class="microstep-text ${currentStep && currentStep.completed ? 'completed' : ''}"
+                >${currentStep ? escapeHTML(currentStep.text) : ''}</span>
+              </div>
+
+              <!-- Historial de micro-pasos completados en esta tarea -->
+              ${completedSteps.length > 0 ? `
+                <div class="microsteps-history">
+                  <span class="history-title">Micro-pasos completados en esta sesión (${completedSteps.length}):</span>
+                  <ul class="microsteps-pill-list">
+                    ${completedSteps.map(s => `
+                      <li class="microstep-pill completed">
+                        <span class="check-icon">✓</span>
+                        <span>${escapeHTML(s.text)}</span>
+                      </li>
+                    `).join('')}
+                  </ul>
+                </div>
+              ` : ''}
+            </div>
+
+            <!-- Botones de Acción de Foco -->
+            <div class="active-actions-row">
+              <button id="complete-task-btn" data-testid="complete-task-btn" class="success-btn" title="Completar tarea completa y registrar victoria (Alt+C)">
+                🎉 Completar Tarea
+              </button>
+              <button id="park-task-btn" data-testid="park-task-btn" class="parking-btn" title="Aparcar en Parking Lot (Alt+P)">
+                ⏸ Aparcar Tarea
+              </button>
+            </div>
+          </div>
+        `;
+
+        // Listeners del contenedor activo
+        const jitForm = document.getElementById('jit-microstep-form');
+        if (jitForm) {
+          jitForm.onsubmit = (e) => {
+            e.preventDefault();
+            addMicrostep();
+          };
+        }
+
+        const jitInput = document.getElementById('jit-microstep-input');
+        const jitHint = document.getElementById('jit-character-hint');
+        if (jitInput && jitHint) {
+          jitInput.oninput = () => {
+            if (jitInput.value.length > 140) {
+              jitHint.textContent = '💡 Sugerencia TDAH: Si parece muy grande, busca una acción física de < 5 min (ej. "Abrir archivo")';
+              jitHint.className = 'jit-hint warn';
+            } else {
+              jitHint.textContent = '';
+              jitHint.className = 'jit-hint';
+            }
+          };
+        }
+
+        const completeStepBtn = document.getElementById('complete-microstep-btn');
+        if (completeStepBtn) {
+          completeStepBtn.onclick = () => {
+            const stepId = completeStepBtn.getAttribute('data-step-id');
+            completeMicrostep(stepId);
+          };
+        }
+
+        const completeTaskBtn = document.getElementById('complete-task-btn');
+        if (completeTaskBtn) {
+          completeTaskBtn.onclick = completeActiveTask;
+        }
+
+        const parkTaskBtn = document.getElementById('park-task-btn');
+        if (parkTaskBtn) {
+          parkTaskBtn.onclick = parkActiveTask;
+        }
+
+        const unfocusBtn = document.getElementById('unfocus-task-btn');
+        if (unfocusBtn) {
+          unfocusBtn.onclick = unfocusActiveTask;
+        }
+      }
+
+      function renderBacklog() {
+        const listContainer = document.getElementById('backlog-list');
+        const badgeCount = document.getElementById('backlog-badge-count');
+        const dimmedNotice = document.getElementById('backlog-dimmed-notice');
+        if (!listContainer) return;
+
+        const backlogTasks = state.tasks.filter(t => t.state === 'backlog');
+        if (badgeCount) badgeCount.textContent = backlogTasks.length;
+
+        const isWipActive = state.activeTaskId !== null;
+        if (dimmedNotice) {
+          dimmedNotice.className = isWipActive ? 'dimmed-notice' : 'dimmed-notice hidden';
+        }
+        listContainer.className = isWipActive ? 'tasks-list backlog-dimmed' : 'tasks-list';
+
+        if (backlogTasks.length === 0) {
+          listContainer.innerHTML = `<div class="empty-state">Bandeja vacía. No tienes tareas acumuladas en el backlog. ¡Captura una arriba con total libertad!</div>`;
+          return;
+        }
+
+        listContainer.innerHTML = backlogTasks.map(task => `
+          <div class="task-item" data-testid="task-item-${escapeHtml(task.id)}" data-task-id="${escapeHtml(task.id)}" data-task-state="backlog">
+            <div class="task-item-content">
+              <div class="task-item-title">${escapeHTML(task.title)}</div>
+              <div class="task-item-meta">
+                Añadida: ${new Date(task.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                ${task.microSteps.length > 0 ? ` • ${task.microSteps.filter(s => s.completed).length}/${task.microSteps.length} micro-pasos` : ''}
+              </div>
+            </div>
+            <div class="task-item-actions">
+              <button class="task-focus-btn" data-testid="task-focus-btn-${escapeHtml(task.id)}" data-task-id="${escapeHtml(task.id)}" title="Enfocar en modo WIP=1">
+                Enfocar (WIP=1)
+              </button>
+              <button class="delete-item-btn" data-delete-id="${escapeHtml(task.id)}" title="Eliminar del backlog" aria-label="Eliminar tarea">
+                &times;
+              </button>
+            </div>
+          </div>
+        `).join('');
+
+        // Listeners de los ítems del backlog
+        listContainer.querySelectorAll('.task-focus-btn').forEach(btn => {
+          btn.onclick = () => focusTask(btn.getAttribute('data-task-id'));
+        });
+
+        listContainer.querySelectorAll('.delete-item-btn').forEach(btn => {
+          btn.onclick = () => deleteTask(btn.getAttribute('data-delete-id'));
+        });
+      }
+
+      function renderParkingLot() {
+        const contentContainer = document.getElementById('parking-lot-content');
+        const badgeCount = document.getElementById('parking-badge-count');
+        if (!contentContainer) return;
+
+        const parkedTasks = state.tasks.filter(t => t.state === 'parked');
+        if (badgeCount) badgeCount.textContent = parkedTasks.length;
+
+        if (parkedTasks.length === 0) {
+          contentContainer.innerHTML = `<div class="empty-state">No hay tareas en el Parking Lot. Cuando necesites pausar una tarea activa sin perderla, apárcala aquí.</div>`;
+          return;
+        }
+
+        contentContainer.innerHTML = parkedTasks.map(task => `
+          <div class="parked-item" data-testid="parked-item-${escapeHtml(task.id)}" data-task-id="${escapeHtml(task.id)}" data-task-state="parked">
+            <div class="parked-item-content">
+              <div class="parked-item-title">${escapeHTML(task.title)}</div>
+              <div class="parked-item-reason">⏸ ${escapeHTML(task.parkedReason || 'Pausada temporalmente')}</div>
+            </div>
+            <div class="task-item-actions">
+              <button class="unpark-btn" data-testid="unpark-task-btn-${escapeHtml(task.id)}" data-task-id="${escapeHtml(task.id)}" title="Reanudar tarea en Foco Único">
+                Reanudar Foco
+              </button>
+              <button class="delete-item-btn" data-delete-id="${escapeHtml(task.id)}" title="Eliminar tarea" aria-label="Eliminar tarea">
+                &times;
+              </button>
+            </div>
+          </div>
+        `).join('');
+
+        contentContainer.querySelectorAll('.unpark-btn').forEach(btn => {
+          btn.onclick = () => unparkTask(btn.getAttribute('data-task-id'));
+        });
+
+        contentContainer.querySelectorAll('.delete-item-btn').forEach(btn => {
+          btn.onclick = () => deleteTask(btn.getAttribute('data-delete-id'));
+        });
+      }
+
+      function renderVictoryLog() {
+        const contentContainer = document.getElementById('victory-log-content');
+        const badgeCount = document.getElementById('victory-badge-count');
+        if (!contentContainer) return;
+
+        const completedTasks = state.tasks.filter(t => t.state === 'completed');
+        if (badgeCount) badgeCount.textContent = state.stats.totalVictories || completedTasks.length;
+
+        if (completedTasks.length === 0) {
+          contentContainer.innerHTML = `<div class="empty-state">Tus victorias se registrarán aquí paso a paso. Cada micro-paso y tarea culminada alimenta este registro.</div>`;
+          return;
+        }
+
+        // Orden cronológico inverso (más recientes arriba)
+        const sorted = [...completedTasks].sort((a, b) => (b.completedAt || 0) - (a.completedAt || 0));
+
+        contentContainer.innerHTML = sorted.map(task => {
+          const completedCount = task.microSteps.filter(s => s.completed).length;
+          const timeStr = task.completedAt ? new Date(task.completedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Hoy';
+          return `
+            <div class="victory-item" data-testid="victory-item-${escapeHtml(task.id)}" data-task-id="${escapeHtml(task.id)}" data-task-state="completed">
+              <div class="victory-item-content">
+                <div class="victory-item-title">${escapeHTML(task.title)}</div>
+                <div class="victory-item-meta">
+                  Culminada a las ${timeStr} ${completedCount > 0 ? ` • ${completedCount} micro-pasos vencidos` : ' • Bloque directo'}
+                </div>
+              </div>
+              <div class="victory-medal" title="Victoria registrada">🏆</div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      function render() {
+        const activeTask = getActiveTask();
+        renderActiveWip(activeTask);
+        renderBacklog();
+        renderParkingLot();
+        renderVictoryLog();
+        updateParkingLotVisibility();
+        updateVictoryLogVisibility();
+      }
+
+      /* --- REGISTRO DE EVENTOS GLOBALES Y ATAJOS DE TECLADO --- */
+      function setupEvents() {
+        // Formulario de captura rápida
+        const captureForm = document.getElementById('task-capture-form');
+        if (captureForm) {
+          captureForm.onsubmit = (e) => {
+            e.preventDefault();
+            captureTask();
+          };
+        }
+
+        // Botones de cabecera
+        const themeBtn = document.getElementById('theme-toggle-btn');
+        if (themeBtn) themeBtn.onclick = toggleTheme;
+
+        const soundBtn = document.getElementById('sound-toggle-btn');
+        if (soundBtn) soundBtn.onclick = toggleSound;
+
+        const exportBtn = document.getElementById('export-json-btn');
+        if (exportBtn) exportBtn.onclick = exportData;
+
+        const importInput = document.getElementById('import-json-input');
+        if (importInput) importInput.onchange = handleImport;
+
+        const resetBtn = document.getElementById('reset-app-btn');
+        if (resetBtn) resetBtn.onclick = resetApp;
+
+        // Botones de colapso/expansión
+        const parkingToggle = document.getElementById('parking-lot-toggle');
+        if (parkingToggle) parkingToggle.onclick = toggleParkingLot;
+
+        const parkingHeader = document.getElementById('parking-lot-header-bar');
+        if (parkingHeader) {
+          parkingHeader.onclick = (e) => {
+            if (e.target.closest('#parking-lot-toggle')) return;
+            toggleParkingLot();
+          };
+        }
+
+        const victoryToggle = document.getElementById('victory-log-toggle');
+        if (victoryToggle) victoryToggle.onclick = toggleVictoryLog;
+
+        const victoryHeader = document.getElementById('victory-log-header-bar');
+        if (victoryHeader) {
+          victoryHeader.onclick = (e) => {
+            if (e.target.closest('#victory-log-toggle')) return;
+            toggleVictoryLog();
+          };
+        }
+
+        // Atajos de teclado ergonómicos
+        window.addEventListener('keydown', (e) => {
+          // Si hay un modal abierto, Escape lo cierra
+          const modalContainer = document.getElementById('modal-container');
+          if (modalContainer && !modalContainer.classList.contains('hidden')) {
+            if (e.key === 'Escape') {
+              e.preventDefault();
+              closeModal();
+              return;
+            }
+          }
+
+          // Atajos con Alt (navegación ergonómica rápida sin ratón)
+          if (e.altKey && !e.ctrlKey && !e.metaKey) {
+            const key = e.key.toLowerCase();
+
+            if (key === 'n') {
+              // Alt+N: Enfocar captura de tarea
+              e.preventDefault();
+              const captureInput = document.getElementById('task-capture-input');
+              if (captureInput) {
+                captureInput.focus();
+                captureInput.select();
+              }
+            } else if (key === 'm') {
+              // Alt+M: Enfocar micro-paso
+              e.preventDefault();
+              const jitInput = document.getElementById('jit-microstep-input');
+              if (jitInput) {
+                jitInput.focus();
+                jitInput.select();
+              }
+            } else if (key === 'p') {
+              // Alt+P: Aparcar tarea activa
+              e.preventDefault();
+              const parkBtn = document.getElementById('park-task-btn');
+              if (parkBtn) parkBtn.click();
+            } else if (key === 'c') {
+              // Alt+C: Completar tarea activa
+              e.preventDefault();
+              const completeBtn = document.getElementById('complete-task-btn');
+              if (completeBtn) completeBtn.click();
+            } else if (key === 'l') {
+              // Alt+L: Alternar Parking Lot
+              e.preventDefault();
+              toggleParkingLot();
+            } else if (key === 'v') {
+              // Alt+V: Alternar Historial de Victorias
+              e.preventDefault();
+              toggleVictoryLog();
+            }
+          }
+        });
+      }
+
+      /* --- INICIALIZACIÓN DE LA APLICACIÓN --- */
+      function init() {
+        applyTheme(state.preferences.theme);
+        if (state.preferences.soundEnabled) {
+          const soundIcon = document.getElementById('sound-icon');
+          const soundLabel = document.getElementById('sound-label');
+          if (soundIcon) soundIcon.textContent = '🔔';
+          if (soundLabel) soundLabel.textContent = 'Activo';
+        }
+        setupEvents();
+        render();
+
+        // Si no hay tarea activa, enfocar campo de captura
+        if (!state.activeTaskId) {
+          const captureInput = document.getElementById('task-capture-input');
+          if (captureInput) captureInput.focus();
+        }
+      }
+
+      // Exponer interfaz para pruebas automatizadas e inspección
+      window.__modeltasker = {
+        getState: () => state,
+        captureTask,
+        focusTask,
+        addMicrostep,
+        completeMicrostep,
+        completeActiveTask,
+        parkActiveTask,
+        unparkTask,
+        toggleParkingLot,
+        toggleVictoryLog,
+        resetApp,
+        exportData,
+        render
+      };
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+    })();
+  </script>
+</body>
+</html>

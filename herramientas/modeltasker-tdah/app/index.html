@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ModelTasker TDAH — Foco Único (WIP=1) &amp; Mínima Fricción</title>
+  <meta name="description" content="Aplicación ergonómica de gestión de tareas para TDAH Inatento: Foco Único (WIP=1), Micro-Acción Just-In-Time, Parking Lot y Cierre Dopaminérgico." />
+</head>
+<body>
+  <noscript>
+    <div style="padding: 20px; background: #ef4444; color: #fff; text-align: center; font-weight: bold;">
+      ModelTasker TDAH requiere JavaScript habilitado para funcionar de forma autónoma en tu navegador local.
+    </div>
+  </noscript>
+
+  <div id="app-root" data-testid="app-root">
+    <header class="app-header">
+      <div class="brand-group">
+        <h1 class="app-title">
+          <span class="brand-gradient">ModelTasker</span>
+          <span class="badge-tdah">TDAH-I</span>
+        </h1>
+        <p class="app-subtitle">Foco Único (WIP=1) • Micro-Acción JIT • Cero Fricción</p>
+      </div>
+
+      <div class="header-controls">
+        <button id="theme-toggle-btn" data-testid="theme-toggle-btn" class="icon-btn" title="Alternar tema oscuro / claro" aria-label="Cambiar tema de color">
+          <span id="theme-icon">🌙</span>
+          <span id="theme-label">Modo</span>
+        </button>
+        <button id="sound-toggle-btn" class="icon-btn" title="Alternar campanilla sonora suave" aria-label="Alternar sonido">
+          <span id="sound-icon">🔇</span>
+          <span id="sound-label">Sonido</span>
+        </button>
+        <button id="export-json-btn" data-testid="export-json-btn" class="icon-btn" title="Exportar copia de seguridad en JSON" aria-label="Exportar respaldo JSON">
+          <span>💾 Exportar</span>
+        </button>
+        <label for="import-json-input" class="icon-btn file-input-label" title="Importar respaldo JSON" aria-label="Importar respaldo JSON">
+          <span>📂 Importar</span>
+          <input type="file" id="import-json-input" data-testid="import-json-input" accept=".json,application/json" class="visually-hidden" />
+        </label>
+        <button id="reset-app-btn" data-testid="reset-app-btn" class="icon-btn btn-danger" title="Restablecer datos de la aplicación" aria-label="Restablecer datos">
+          <span>🔄 Reiniciar</span>
+        </button>
+      </div>
+    </header>
+
+    <section id="task-capture-container" data-testid="capture-section" class="capture-section">
+      <form id="task-capture-form" class="capture-form">
+        <label for="task-capture-input" class="visually-hidden">Captura rápida de tarea</label>
+        <div class="input-action-row">
+          <input
+            type="text"
+            id="task-capture-input"
+            data-testid="task-capture-input"
+            class="capture-input"
+            placeholder="¿Qué tienes en mente ahora? Escribe y pulsa Enter..."
+            autocomplete="off"
+            spellcheck="true"
+          />
+          <button type="submit" id="task-capture-submit" data-testid="task-capture-submit" class="primary-btn">
+            Capturar
+          </button>
+        </div>
+        <p class="capture-hint">
+          <span class="hint-kbd">Enter</span> para capturar en crudo • <span class="hint-kbd">Alt+N</span> para volver aquí • Sin categorías obligatorias
+        </p>
+      </form>
+    </section>
+
+    <section id="active-wip-container" data-testid="active-wip-container" class="active-wip-section"></section>
+
+    <section id="backlog-container" data-testid="backlog-container" class="backlog-section">
+      <div class="section-header">
+        <h2 class="section-title">
+          Bandeja de Tareas (Backlog)
+          <span id="backlog-badge-count" class="counter-badge">0</span>
+        </h2>
+      </div>
+      <div id="backlog-toolbar-container"></div>
+      <div id="backlog-dimmed-notice" class="dimmed-notice hidden">
+        ⚡ <strong>Modo Foco Activo (WIP=1)</strong>: El backlog se atenúa visualmente para proteger tu memoria de trabajo de la dispersión.
+      </div>
+      <div id="backlog-list" class="tasks-list"></div>
+    </section>
+
+    <section id="parking-lot-container" data-testid="parking-lot-container" class="parking-lot-section">
+      <div class="section-header parking-lot-header" id="parking-lot-header-bar">
+        <div class="header-left">
+          <h2 class="section-title parking-title">
+            Parking Lot
+            <span id="parking-badge-count" data-testid="parking-badge-count" class="counter-badge parking-badge">0</span>
+          </h2>
+          <span class="parking-desc">Tareas en pausa temporal (permanencia del objeto sin saturar el foco)</span>
+        </div>
+        <button id="parking-lot-toggle" data-testid="parking-lot-toggle" class="toggle-btn" aria-expanded="true" aria-controls="parking-lot-content">
+          <span id="parking-toggle-icon">▼</span>
+          <span id="parking-toggle-text">Ocultar</span>
+        </button>
+      </div>
+      <div id="parking-lot-content" data-testid="parking-lot-content" class="parking-lot-content"></div>
+    </section>
+
+    <section id="victory-log-container" data-testid="victory-log-container" class="victory-log-section">
+      <div class="section-header victory-header" id="victory-log-header-bar">
+        <div class="header-left">
+          <h2 class="section-title victory-title">
+            Historial de Victorias
+            <span id="victory-badge-count" data-testid="victory-badge-count" class="counter-badge victory-badge">0</span>
+          </h2>
+          <span class="victory-desc">Registro permanente de logros (antídoto contra la amnesia retrospectiva)</span>
+        </div>
+        <button id="victory-log-toggle" data-testid="victory-log-toggle" class="toggle-btn" aria-expanded="false" aria-controls="victory-log-content">
+          <span id="victory-toggle-icon">▶</span>
+          <span id="victory-toggle-text">Ver historial</span>
+        </button>
+      </div>
+      <div id="victory-log-content" data-testid="victory-log-content" class="victory-log-content" style="display: none;"></div>
+    </section>
+
+    <section id="stats-panel-container" data-testid="stats-panel-container" class="victory-log-section">
+      <div class="section-header victory-header" id="stats-panel-header-bar">
+        <div class="header-left">
+          <h2 class="section-title">📊 Estadísticas</h2>
+          <span class="victory-desc">Evidencia amable de tu avance, sin rachas punitivas</span>
+        </div>
+        <button id="stats-panel-toggle" data-testid="stats-panel-toggle" class="toggle-btn" aria-expanded="false" aria-controls="stats-panel-content">
+          <span id="stats-toggle-icon">▶</span>
+          <span id="stats-toggle-text">Ver estadísticas</span>
+        </button>
+      </div>
+      <div id="stats-panel-content" data-testid="stats-panel-content" class="victory-log-content" style="display: none;"></div>
+    </section>
+
+    <footer class="app-footer">
+      <div class="shortcuts-grid">
+        <div class="shortcut-chip"><kbd>Alt+N</kbd> Capturar</div>
+        <div class="shortcut-chip"><kbd>Alt+M</kbd> Micro-paso</div>
+        <div class="shortcut-chip"><kbd>Alt+P</kbd> Aparcar</div>
+        <div class="shortcut-chip"><kbd>Alt+C</kbd> Completar</div>
+        <div class="shortcut-chip"><kbd>Alt+L</kbd> Parking Lot</div>
+        <div class="shortcut-chip"><kbd>Alt+V</kbd> Victorias</div>
+        <div class="shortcut-chip"><kbd>Esc</kbd> Cancelar</div>
+      </div>
+    </footer>
+  </div>
+
+  <div id="dopamine-toast" data-testid="dopamine-toast" role="status" aria-live="polite" class="dopamine-toast hidden"></div>
+
+  <div id="modal-container" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-hidden="true"></div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
