@@ -12,7 +12,7 @@ title: Capturas a PDF — TestConCiencia
 </blockquote>
 
 <div class="c2p">
-  <label id="drop" class="c2p-drop">
+  <label id="drop" class="c2p-drop" tabindex="0" role="button" aria-controls="file-input">
     <input type="file" id="file-input" accept="image/*" multiple hidden>
     <span class="c2p-drop-main">+ Seleccionar capturas</span>
     <span class="c2p-drop-sub">o arrástralas aquí · puedes añadir más en varias tandas</span>
@@ -61,13 +61,15 @@ title: Capturas a PDF — TestConCiencia
 
 <style>
   .c2p { margin: 1.5rem 0 2.5rem; }
+  .c2p [hidden] { display: none !important; }
   .c2p-drop {
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .3rem;
     border: 2px dashed rgba(56,189,248,0.5); border-radius: 12px;
     background: var(--card, #131B2E); min-height: 150px; padding: 1.5rem 1rem;
     cursor: pointer; text-align: center; transition: border-color .2s, background .2s;
   }
-  .c2p-drop:hover, .c2p-drop.over { border-color: var(--accent, #38BDF8); background: #17223b; }
+  .c2p-drop:hover, .c2p-drop.over, .c2p-drop:focus-visible { outline: none; border-color: var(--accent, #38BDF8); background: #17223b; }
+  .c2p-drop.busy { opacity: .5; cursor: not-allowed; }
   .c2p-drop-main { font-size: 1.15rem; font-weight: 700; color: #E5E7EB; }
   .c2p-drop-sub { color: var(--text-muted, #9CA3AF); font-size: .9rem; }
   .c2p-toolbar, .c2p-export {
@@ -136,6 +138,8 @@ title: Capturas a PDF — TestConCiencia
   // Cada entrada: { file, url, time, fromName }
   var items = [];
   var lastPdf = null; // { blob, name }
+  // Mientras se genera el PDF la lista no puede cambiar.
+  var busy = false;
 
   // Límite de tamaño de página de PDF (14400 pt).
   var MAX_PAGE = 14400;
@@ -170,6 +174,7 @@ title: Capturas a PDF — TestConCiencia
   }
 
   function addFiles(fileList) {
+    if (busy) return;
     var added = 0, skipped = 0;
     Array.prototype.forEach.call(fileList, function (file) {
       if (!file.type || file.type.indexOf('image/') !== 0) { skipped++; return; }
@@ -250,6 +255,7 @@ title: Capturas a PDF — TestConCiencia
   }
 
   function move(idx, delta) {
+    if (busy) return;
     var j = idx + delta;
     if (j < 0 || j >= items.length) return;
     var tmp = items[idx]; items[idx] = items[j]; items[j] = tmp;
@@ -258,6 +264,7 @@ title: Capturas a PDF — TestConCiencia
   }
 
   function removeAt(idx) {
+    if (busy) return;
     URL.revokeObjectURL(items[idx].url);
     items.splice(idx, 1);
     lastPdf = null;
@@ -284,8 +291,19 @@ title: Capturas a PDF — TestConCiencia
     return (base || defaultName()) + '.pdf';
   }
 
+  function setBusy(on) {
+    busy = on;
+    drop.classList.toggle('busy', on);
+    drop.setAttribute('aria-disabled', on ? 'true' : 'false');
+    fileInput.disabled = on;
+    [sortMode, btnInvert, quality, btnClear, pdfName, btnGenerate].forEach(function (el) { el.disabled = on; });
+    if (on) {
+      Array.prototype.forEach.call(grid.querySelectorAll('button'), function (b) { b.disabled = true; });
+    }
+  }
+
   function generate() {
-    if (!items.length) return;
+    if (busy || !items.length) return;
     if (!window.jspdf || !window.jspdf.jsPDF) {
       showMsg('No se pudo cargar el generador de PDF. Recarga la página.', 'err');
       return;
@@ -296,14 +314,16 @@ title: Capturas a PDF — TestConCiencia
     var ctx = canvas.getContext('2d');
     var pdf = null;
     var i = 0;
+    // Copia fija del orden actual para todo el proceso.
+    var list = items.slice();
 
-    btnGenerate.disabled = true;
+    setBusy(true);
     btnShare.hidden = true;
 
     function next() {
-      if (i >= items.length) return Promise.resolve();
-      var it = items[i];
-      showMsg('Procesando ' + (i + 1) + ' de ' + items.length + '…');
+      if (i >= list.length) return Promise.resolve();
+      var it = list[i];
+      showMsg('Procesando ' + (i + 1) + ' de ' + list.length + '…');
       return loadImage(it.url).then(function (img) {
         var w = img.naturalWidth, h = img.naturalHeight;
         // Se pasa por canvas para aceptar PNG/WebP/HEIC-decodificado y comprimir a JPEG.
@@ -338,12 +358,16 @@ title: Capturas a PDF — TestConCiencia
       var blob = pdf.output('blob');
       lastPdf = { blob: blob, name: name };
       downloadBlob(blob, name);
-      showMsg('PDF descargado: ' + name + ' · ' + items.length + ' páginas · ' + fmtBytes(blob.size) + '.', 'ok');
-      btnShare.hidden = !canShare(blob, name);
+      showMsg('PDF descargado: ' + name + ' · ' + list.length + ' páginas · ' + fmtBytes(blob.size) + '.', 'ok');
     }).catch(function (err) {
       showMsg((err && err.message) || 'Error al generar el PDF.', 'err');
     }).then(function () {
-      btnGenerate.disabled = false;
+      setBusy(false);
+      // Restaura el estado de las flechas de cada miniatura sin tocar el mensaje.
+      var text = msg.textContent, cls = msg.className;
+      render();
+      msg.textContent = text; msg.className = cls;
+      btnShare.hidden = !(lastPdf && canShare(lastPdf.blob, lastPdf.name));
     });
   }
 
@@ -390,15 +414,22 @@ title: Capturas a PDF — TestConCiencia
   ['dragleave', 'drop'].forEach(function (ev) {
     drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('over'); });
   });
+  drop.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      if (!busy) fileInput.click();
+    }
+  });
   drop.addEventListener('drop', function (e) {
     if (e.dataTransfer && e.dataTransfer.files) addFiles(e.dataTransfer.files);
   });
 
-  sortMode.addEventListener('change', function () { sortItems(); lastPdf = null; render(); });
+  sortMode.addEventListener('change', function () { if (busy) return; sortItems(); lastPdf = null; render(); });
 
-  btnInvert.addEventListener('click', function () { items.reverse(); lastPdf = null; render(); });
+  btnInvert.addEventListener('click', function () { if (busy) return; items.reverse(); lastPdf = null; render(); });
 
   btnClear.addEventListener('click', function () {
+    if (busy) return;
     items.forEach(function (it) { URL.revokeObjectURL(it.url); });
     items = [];
     lastPdf = null;
