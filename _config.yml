@@ -16,6 +16,7 @@ defaults:
       sitemap: false
 
 exclude:
+  - BACKLOG.md
   - Gemfile
   - Gemfile.lock
   - vendor
