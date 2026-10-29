@@ -152,7 +152,9 @@ title: Capturas a PDF — TestConCiencia
   // Fecha y hora embebidas en el nombre de las capturas:
   // Screenshot_20261028-101530.png, Screenshot_2026-10-28-10-15-30-123_app.jpg,
   // IMG_20261028_101530.jpg, "Captura de pantalla 2026-10-28 101530.png",
-  // "Screenshot 2026-10-28 at 10.15.30.png"…
+  // "Screenshot 2026-10-28 at 10.15.30 PM.png", "… a las 10.15.30 p. m.png"…
+  // AM/PM justo después de la hora (capturas de macOS con reloj de 12 h).
+  var MERIDIEM = /^\s*([ap])\.?\s*m\b\.?/i;
   var NAME_DATE = /(20\d{2})[-_.]?(\d{2})[-_.]?(\d{2})(?:[-_ T]|\s*(?:at|a las)\s*)?(\d{2})[-_.:h]?(\d{2})[-_.:m]?(\d{2})(?:[-_.](\d{1,3})(?!\d))?/i;
 
   function timeFromName(name) {
@@ -160,6 +162,11 @@ title: Capturas a PDF — TestConCiencia
     if (!m) return null;
     var y = +m[1], mo = +m[2], d = +m[3], h = +m[4], mi = +m[5], s = +m[6];
     if (mo < 1 || mo > 12 || d < 1 || d > 31 || h > 23 || mi > 59 || s > 59) return null;
+    var mer = MERIDIEM.exec(name.slice(m.index + m[0].length));
+    if (mer) {
+      if (h < 1 || h > 12) return null;
+      h = h % 12 + (mer[1].toLowerCase() === 'p' ? 12 : 0);
+    }
     var ms = m[7] ? +(m[7] + '00').slice(0, 3) : 0;
     return new Date(y, mo - 1, d, h, mi, s, ms).getTime();
   }
@@ -254,6 +261,15 @@ title: Capturas a PDF — TestConCiencia
     return b;
   }
 
+  // Devuelve el foco al botón `op` (0 ←, 1 ✕, 2 →) de la miniatura `idx` tras re-renderizar;
+  // si está deshabilitado (primera/última página) se usa ✕.
+  function focusOp(idx, op) {
+    var card = grid.children[idx];
+    if (!card) { drop.focus(); return; }
+    var btns = card.querySelectorAll('.c2p-ops button');
+    (btns[op] && !btns[op].disabled ? btns[op] : btns[1]).focus();
+  }
+
   function move(idx, delta) {
     if (busy) return;
     var j = idx + delta;
@@ -261,6 +277,7 @@ title: Capturas a PDF — TestConCiencia
     var tmp = items[idx]; items[idx] = items[j]; items[j] = tmp;
     lastPdf = null;
     render();
+    focusOp(j, delta < 0 ? 0 : 2);
   }
 
   function removeAt(idx) {
@@ -269,6 +286,7 @@ title: Capturas a PDF — TestConCiencia
     items.splice(idx, 1);
     lastPdf = null;
     render();
+    focusOp(Math.min(idx, items.length - 1), 1);
   }
 
   function loadImage(url) {
