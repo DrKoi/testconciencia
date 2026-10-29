@@ -1,0 +1,460 @@
+---
+layout: default
+title: Capturas a PDF — TestConCiencia
+---
+
+<h1>🖼️ Capturas a PDF</h1>
+
+<blockquote>
+  Elige tus capturas de pantalla y descárgalas como un único <strong>PDF</strong>, ordenadas
+  de la primera que tomaste a la última. Cada página tiene el tamaño exacto de su captura
+  (sin bordes blancos). Todo ocurre en tu navegador; nada se sube a Internet.
+</blockquote>
+
+<div class="c2p">
+  <label id="drop" class="c2p-drop" tabindex="0" role="button" aria-controls="file-input">
+    <input type="file" id="file-input" accept="image/*" multiple hidden>
+    <span class="c2p-drop-main">+ Seleccionar capturas</span>
+    <span class="c2p-drop-sub">o arrástralas aquí · puedes añadir más en varias tandas</span>
+  </label>
+
+  <div id="toolbar" class="c2p-toolbar" hidden>
+    <label class="c2p-field">
+      Orden
+      <select id="sort-mode">
+        <option value="date">Fecha de captura (1 → N)</option>
+        <option value="name">Nombre de archivo (A → Z)</option>
+      </select>
+    </label>
+    <button id="btn-invert" type="button" class="c2p-btn">⇅ Invertir orden</button>
+    <label class="c2p-field">
+      Calidad
+      <select id="quality">
+        <option value="0.92">Alta</option>
+        <option value="0.82" selected>Equilibrada</option>
+        <option value="0.65">Ligera</option>
+      </select>
+    </label>
+    <button id="btn-clear" type="button" class="c2p-btn">Vaciar</button>
+  </div>
+
+  <div id="export" class="c2p-export" hidden>
+    <input type="text" id="pdf-name" class="c2p-name" placeholder="Nombre del PDF (ej: U1_S1_Apunte)" autocomplete="off">
+    <button id="btn-generate" type="button" class="c2p-btn c2p-btn-primary">⬇ Descargar PDF</button>
+    <button id="btn-share" type="button" class="c2p-btn" hidden>Compartir PDF</button>
+  </div>
+
+  <p id="msg" class="c2p-msg" aria-live="polite">0 capturas cargadas.</p>
+  <div id="grid" class="c2p-grid"></div>
+</div>
+
+<h2>¿Cómo se ordenan?</h2>
+<ul>
+  <li><strong>Fecha de captura</strong> (por defecto): primero se lee la fecha y hora que Android,
+      iOS y Windows ponen en el nombre de la captura (p. ej. <code>Screenshot_20261028-101530.png</code>).
+      Si el nombre no la trae, se usa la fecha de modificación del archivo. Así no importa en qué
+      orden te entregue las fotos la galería: la página 1 es siempre la primera captura.</li>
+  <li>Si un lote sale al revés, pulsa <strong>Invertir orden</strong>. También puedes mover o quitar
+      páginas sueltas con los botones de cada miniatura.</li>
+  <li>El número de cada miniatura es la página que ocupará en el PDF.</li>
+</ul>
+
+<style>
+  .c2p { margin: 1.5rem 0 2.5rem; }
+  .c2p [hidden] { display: none !important; }
+  .c2p-drop {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .3rem;
+    border: 2px dashed rgba(56,189,248,0.5); border-radius: 12px;
+    background: var(--card, #131B2E); min-height: 150px; padding: 1.5rem 1rem;
+    cursor: pointer; text-align: center; transition: border-color .2s, background .2s;
+  }
+  .c2p-drop:hover, .c2p-drop.over, .c2p-drop:focus-visible { outline: none; border-color: var(--accent, #38BDF8); background: #17223b; }
+  .c2p-drop.busy { opacity: .5; cursor: not-allowed; }
+  .c2p-drop-main { font-size: 1.15rem; font-weight: 700; color: #E5E7EB; }
+  .c2p-drop-sub { color: var(--text-muted, #9CA3AF); font-size: .9rem; }
+  .c2p-toolbar, .c2p-export {
+    display: flex; flex-wrap: wrap; gap: .7rem; align-items: center; margin-top: 1rem;
+  }
+  .c2p-field { display: flex; align-items: center; gap: .45rem; font-size: .85rem; color: var(--text-muted, #9CA3AF); }
+  .c2p select, .c2p-name {
+    font: inherit; font-size: .9rem; color: var(--text, #F3F4F6);
+    background: #0f1626; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: .5rem .7rem;
+  }
+  .c2p-name { flex: 1; min-width: 200px; }
+  .c2p-btn {
+    cursor: pointer; font: inherit; font-size: .85rem; font-weight: 700;
+    background: rgba(255,255,255,0.08); color: var(--text, #F3F4F6);
+    border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: .55rem 1rem;
+  }
+  .c2p-btn:hover { background: rgba(255,255,255,0.14); }
+  .c2p-btn:disabled { opacity: .45; cursor: not-allowed; }
+  .c2p-btn-primary { background: var(--accent, #38BDF8); color: #04121e; border-color: transparent; }
+  .c2p-btn-primary:hover { filter: brightness(1.08); background: var(--accent, #38BDF8); }
+  .c2p-msg { font-size: .9rem; color: var(--text-muted, #9CA3AF); margin: 1rem 0 0; }
+  .c2p-msg.err { color: #F87171; }
+  .c2p-msg.ok { color: #4ADE80; }
+  .c2p-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .8rem; margin-top: 1rem;
+  }
+  .c2p-thumb {
+    position: relative; background: #000; border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px; overflow: hidden; display: flex; flex-direction: column;
+  }
+  .c2p-thumb img { width: 100%; height: 110px; object-fit: contain; display: block; }
+  .c2p-badge {
+    position: absolute; top: 5px; left: 5px; background: rgba(0,0,0,0.8); color: #fff;
+    font-size: .75rem; font-weight: 700; padding: .1rem .45rem; border-radius: 4px;
+  }
+  .c2p-cap {
+    font-size: .7rem; color: var(--text-muted, #9CA3AF); padding: .3rem .45rem 0;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: var(--card, #131B2E);
+  }
+  .c2p-ops { display: flex; background: var(--card, #131B2E); }
+  .c2p-ops button {
+    flex: 1; cursor: pointer; font: inherit; font-size: .95rem; color: var(--text, #F3F4F6);
+    background: none; border: none; padding: .35rem 0;
+  }
+  .c2p-ops button:hover { background: rgba(255,255,255,0.08); }
+  .c2p-ops button:disabled { opacity: .3; cursor: default; background: none; }
+</style>
+
+<script src="jspdf.umd.min.js?v=4.2.1"></script>
+<script>
+(function () {
+  var fileInput = document.getElementById('file-input');
+  var drop = document.getElementById('drop');
+  var toolbar = document.getElementById('toolbar');
+  var exportBar = document.getElementById('export');
+  var sortMode = document.getElementById('sort-mode');
+  var btnInvert = document.getElementById('btn-invert');
+  var btnClear = document.getElementById('btn-clear');
+  var quality = document.getElementById('quality');
+  var pdfName = document.getElementById('pdf-name');
+  var btnGenerate = document.getElementById('btn-generate');
+  var btnShare = document.getElementById('btn-share');
+  var msg = document.getElementById('msg');
+  var grid = document.getElementById('grid');
+
+  // Cada entrada: { file, url, time, fromName }
+  var items = [];
+  var lastPdf = null; // { blob, name }
+  // Mientras se genera el PDF la lista no puede cambiar.
+  var busy = false;
+
+  // Límite de tamaño de página de PDF (14400 pt).
+  var MAX_PAGE = 14400;
+
+  function showMsg(text, kind) {
+    msg.textContent = text || '';
+    msg.className = 'c2p-msg' + (kind ? ' ' + kind : '');
+  }
+
+  // Fecha y hora embebidas en el nombre de las capturas:
+  // Screenshot_20261028-101530.png, Screenshot_2026-10-28-10-15-30-123_app.jpg,
+  // IMG_20261028_101530.jpg, "Captura de pantalla 2026-10-28 101530.png",
+  // "Screenshot 2026-10-28 at 10.15.30 PM.png", "… a las 10.15.30 p. m.png"…
+  // AM/PM justo después de la hora (capturas de macOS con reloj de 12 h).
+  var MERIDIEM = /^\s*([ap])\.?\s*m\b\.?/i;
+  var NAME_DATE = /(20\d{2})[-_.]?(\d{2})[-_.]?(\d{2})(?:[-_ T]|\s*(?:at|a las)\s*)?(\d{2})[-_.:h]?(\d{2})[-_.:m]?(\d{2})(?:[-_.](\d{1,3})(?!\d))?/i;
+
+  function timeFromName(name) {
+    var m = NAME_DATE.exec(name);
+    if (!m) return null;
+    var y = +m[1], mo = +m[2], d = +m[3], h = +m[4], mi = +m[5], s = +m[6];
+    if (mo < 1 || mo > 12 || d < 1 || d > 31 || h > 23 || mi > 59 || s > 59) return null;
+    var mer = MERIDIEM.exec(name.slice(m.index + m[0].length));
+    if (mer) {
+      if (h < 1 || h > 12) return null;
+      h = h % 12 + (mer[1].toLowerCase() === 'p' ? 12 : 0);
+    }
+    var ms = m[7] ? +(m[7] + '00').slice(0, 3) : 0;
+    return new Date(y, mo - 1, d, h, mi, s, ms).getTime();
+  }
+
+  var collator = new Intl.Collator('es', { numeric: true, sensitivity: 'base' });
+
+  function byName(a, b) { return collator.compare(a.file.name, b.file.name); }
+  function byDate(a, b) { return (a.time - b.time) || byName(a, b); }
+
+  function sortItems() {
+    items.sort(sortMode.value === 'name' ? byName : byDate);
+  }
+
+  function addFiles(fileList) {
+    if (busy) return;
+    var added = 0, skipped = 0;
+    Array.prototype.forEach.call(fileList, function (file) {
+      if (!file.type || file.type.indexOf('image/') !== 0) { skipped++; return; }
+      var t = timeFromName(file.name);
+      items.push({
+        file: file,
+        url: URL.createObjectURL(file),
+        time: t !== null ? t : file.lastModified,
+        fromName: t !== null
+      });
+      added++;
+    });
+    sortItems();
+    lastPdf = null;
+    render();
+    if (skipped) showMsg(skipped + ' archivo(s) ignorado(s) por no ser imágenes. ' + summary(), 'err');
+  }
+
+  function summary() {
+    return items.length + (items.length === 1 ? ' captura lista.' : ' capturas listas.');
+  }
+
+  function fmtTime(ms) {
+    var d = new Date(ms);
+    function p(n) { return n < 10 ? '0' + n : '' + n; }
+    return p(d.getDate()) + '/' + p(d.getMonth() + 1) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+  }
+
+  function render() {
+    var has = items.length > 0;
+    toolbar.hidden = !has;
+    exportBar.hidden = !has;
+    btnShare.hidden = true;
+    showMsg(has ? summary() : '0 capturas cargadas.');
+
+    grid.innerHTML = '';
+    items.forEach(function (it, idx) {
+      var card = document.createElement('div');
+      card.className = 'c2p-thumb';
+
+      var img = document.createElement('img');
+      img.src = it.url;
+      img.alt = 'Página ' + (idx + 1);
+      img.loading = 'lazy';
+
+      var badge = document.createElement('span');
+      badge.className = 'c2p-badge';
+      badge.textContent = '#' + (idx + 1);
+
+      var cap = document.createElement('div');
+      cap.className = 'c2p-cap';
+      cap.textContent = fmtTime(it.time) + ' · ' + it.file.name;
+      cap.title = it.file.name + (it.fromName ? ' (fecha leída del nombre)' : ' (fecha del archivo)');
+
+      var ops = document.createElement('div');
+      ops.className = 'c2p-ops';
+      ops.appendChild(opButton('←', 'Mover antes', idx === 0, function () { move(idx, -1); }));
+      ops.appendChild(opButton('✕', 'Quitar', false, function () { removeAt(idx); }));
+      ops.appendChild(opButton('→', 'Mover después', idx === items.length - 1, function () { move(idx, 1); }));
+
+      card.appendChild(img);
+      card.appendChild(badge);
+      card.appendChild(cap);
+      card.appendChild(ops);
+      grid.appendChild(card);
+    });
+  }
+
+  function opButton(label, title, disabled, onClick) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = label;
+    b.title = title;
+    b.setAttribute('aria-label', title);
+    b.disabled = disabled;
+    b.addEventListener('click', onClick);
+    return b;
+  }
+
+  // Devuelve el foco al botón `op` (0 ←, 1 ✕, 2 →) de la miniatura `idx` tras re-renderizar;
+  // si está deshabilitado (primera/última página) se usa ✕.
+  function focusOp(idx, op) {
+    var card = grid.children[idx];
+    if (!card) { drop.focus(); return; }
+    var btns = card.querySelectorAll('.c2p-ops button');
+    (btns[op] && !btns[op].disabled ? btns[op] : btns[1]).focus();
+  }
+
+  function move(idx, delta) {
+    if (busy) return;
+    var j = idx + delta;
+    if (j < 0 || j >= items.length) return;
+    var tmp = items[idx]; items[idx] = items[j]; items[j] = tmp;
+    lastPdf = null;
+    render();
+    focusOp(j, delta < 0 ? 0 : 2);
+  }
+
+  function removeAt(idx) {
+    if (busy) return;
+    URL.revokeObjectURL(items[idx].url);
+    items.splice(idx, 1);
+    lastPdf = null;
+    render();
+    focusOp(Math.min(idx, items.length - 1), 1);
+  }
+
+  function loadImage(url) {
+    return new Promise(function (resolve, reject) {
+      var img = new Image();
+      img.onload = function () { resolve(img); };
+      img.onerror = function () { reject(new Error('imagen no válida')); };
+      img.src = url;
+    });
+  }
+
+  function defaultName() {
+    var d = new Date(items.length ? items[0].time : Date.now());
+    function p(n) { return n < 10 ? '0' + n : '' + n; }
+    return 'Capturas_' + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '_' + p(d.getHours()) + p(d.getMinutes());
+  }
+
+  function buildFileName() {
+    var base = pdfName.value.trim().replace(/\.pdf$/i, '').replace(/[\\/:*?"<>|]+/g, '_');
+    return (base || defaultName()) + '.pdf';
+  }
+
+  function setBusy(on) {
+    busy = on;
+    drop.classList.toggle('busy', on);
+    drop.setAttribute('aria-disabled', on ? 'true' : 'false');
+    fileInput.disabled = on;
+    [sortMode, btnInvert, quality, btnClear, pdfName, btnGenerate].forEach(function (el) { el.disabled = on; });
+    if (on) {
+      Array.prototype.forEach.call(grid.querySelectorAll('button'), function (b) { b.disabled = true; });
+    }
+  }
+
+  function generate() {
+    if (busy || !items.length) return;
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+      showMsg('No se pudo cargar el generador de PDF. Recarga la página.', 'err');
+      return;
+    }
+    var jsPDF = window.jspdf.jsPDF;
+    var q = parseFloat(quality.value);
+    var canvas = document.createElement('canvas');
+    var ctx = canvas.getContext('2d');
+    var pdf = null;
+    var i = 0;
+    // Copia fija del orden actual para todo el proceso.
+    var list = items.slice();
+
+    setBusy(true);
+    btnShare.hidden = true;
+
+    function next() {
+      if (i >= list.length) return Promise.resolve();
+      var it = list[i];
+      showMsg('Procesando ' + (i + 1) + ' de ' + list.length + '…');
+      return loadImage(it.url).then(function (img) {
+        var w = img.naturalWidth, h = img.naturalHeight;
+        // Se pasa por canvas para aceptar PNG/WebP/HEIC-decodificado y comprimir a JPEG.
+        canvas.width = w; canvas.height = h;
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0);
+        var data = canvas.toDataURL('image/jpeg', q);
+
+        // 1 px = 1 pt: la página mide exactamente lo que la captura (sin bordes).
+        var scale = Math.min(1, MAX_PAGE / Math.max(w, h));
+        var pw = w * scale, ph = h * scale;
+        var orientation = pw >= ph ? 'landscape' : 'portrait';
+        if (!pdf) {
+          pdf = new jsPDF({ orientation: orientation, unit: 'pt', format: [pw, ph], compress: true });
+        } else {
+          pdf.addPage([pw, ph], orientation);
+        }
+        pdf.addImage(data, 'JPEG', 0, 0, pw, ph, undefined, 'FAST');
+      }, function () {
+        throw new Error('No se pudo leer «' + it.file.name + '».');
+      }).then(function () {
+        i++;
+        // Cede el hilo para que se actualice el mensaje de progreso.
+        return new Promise(function (r) { setTimeout(r, 0); }).then(next);
+      });
+    }
+
+    next().then(function () {
+      canvas.width = canvas.height = 0;
+      var name = buildFileName();
+      var blob = pdf.output('blob');
+      lastPdf = { blob: blob, name: name };
+      downloadBlob(blob, name);
+      showMsg('PDF descargado: ' + name + ' · ' + list.length + ' páginas · ' + fmtBytes(blob.size) + '.', 'ok');
+    }).catch(function (err) {
+      showMsg((err && err.message) || 'Error al generar el PDF.', 'err');
+    }).then(function () {
+      setBusy(false);
+      // Restaura el estado de las flechas de cada miniatura sin tocar el mensaje.
+      var text = msg.textContent, cls = msg.className;
+      render();
+      msg.textContent = text; msg.className = cls;
+      btnShare.hidden = !(lastPdf && canShare(lastPdf.blob, lastPdf.name));
+    });
+  }
+
+  function fmtBytes(n) {
+    if (n < 1048576) return (n / 1024).toFixed(0) + ' KB';
+    return (n / 1048576).toFixed(1) + ' MB';
+  }
+
+  function downloadBlob(blob, name) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 30000);
+  }
+
+  function pdfFile(blob, name) {
+    return new File([blob], name, { type: 'application/pdf' });
+  }
+
+  function canShare(blob, name) {
+    try {
+      return !!(navigator.canShare && navigator.canShare({ files: [pdfFile(blob, name)] }));
+    } catch (e) { return false; }
+  }
+
+  btnShare.addEventListener('click', function () {
+    if (!lastPdf) return;
+    navigator.share({ files: [pdfFile(lastPdf.blob, lastPdf.name)], title: lastPdf.name })
+      .catch(function () { /* el usuario canceló */ });
+  });
+
+  fileInput.addEventListener('change', function () {
+    addFiles(fileInput.files);
+    fileInput.value = '';
+  });
+
+  ['dragenter', 'dragover'].forEach(function (ev) {
+    drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('over'); });
+  });
+  ['dragleave', 'drop'].forEach(function (ev) {
+    drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('over'); });
+  });
+  drop.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      if (!busy) fileInput.click();
+    }
+  });
+  drop.addEventListener('drop', function (e) {
+    if (e.dataTransfer && e.dataTransfer.files) addFiles(e.dataTransfer.files);
+  });
+
+  sortMode.addEventListener('change', function () { if (busy) return; sortItems(); lastPdf = null; render(); });
+
+  btnInvert.addEventListener('click', function () { if (busy) return; items.reverse(); lastPdf = null; render(); });
+
+  btnClear.addEventListener('click', function () {
+    if (busy) return;
+    items.forEach(function (it) { URL.revokeObjectURL(it.url); });
+    items = [];
+    lastPdf = null;
+    pdfName.value = '';
+    render();
+  });
+
+  btnGenerate.addEventListener('click', generate);
+})();
+</script>
