@@ -4,109 +4,150 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{ page.title | default: site.title }}</title>
-  <meta name="description" content="{{ site.description }}">
+  <meta name="description" content="{{ page.description | default: site.description }}">
+  <meta name="theme-color" content="#17141A">
+  <link rel="preload" href="{{ "/assets/fonts/courier-prime-latin-400-normal.woff2" | relative_url }}" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{{ "/assets/fonts/bodoni-moda-latin-800-normal.woff2" | relative_url }}" as="font" type="font/woff2" crossorigin>
   <style>
+    /* Fuentes alojadas en el propio sitio (sin peticiones a terceros). Licencias en /licencias/. */
+    @font-face { font-family: 'Courier Prime'; font-weight: 400; font-style: normal; font-display: swap; src: url('{{ "/assets/fonts/courier-prime-latin-400-normal.woff2" | relative_url }}') format('woff2'); }
+    @font-face { font-family: 'Courier Prime'; font-weight: 700; font-style: normal; font-display: swap; src: url('{{ "/assets/fonts/courier-prime-latin-700-normal.woff2" | relative_url }}') format('woff2'); }
+    @font-face { font-family: 'Bodoni Moda'; font-weight: 800; font-style: normal; font-display: swap; src: url('{{ "/assets/fonts/bodoni-moda-latin-800-normal.woff2" | relative_url }}') format('woff2'); }
+    @font-face { font-family: 'Bodoni Moda'; font-weight: 400; font-style: italic; font-display: swap; src: url('{{ "/assets/fonts/bodoni-moda-latin-400-italic.woff2" | relative_url }}') format('woff2'); }
+    @font-face { font-family: 'Bodoni Moda'; font-weight: 600; font-style: italic; font-display: swap; src: url('{{ "/assets/fonts/bodoni-moda-latin-600-italic.woff2" | relative_url }}') format('woff2'); }
+    @font-face { font-family: 'Rye'; font-weight: 400; font-style: normal; font-display: swap; src: url('{{ "/assets/fonts/rye-latin-400-normal.woff2" | relative_url }}') format('woff2'); }
+    @font-face { font-family: 'Permanent Marker'; font-weight: 400; font-style: normal; font-display: swap; src: url('{{ "/assets/fonts/permanent-marker-latin-400-normal.woff2" | relative_url }}') format('woff2'); }
+    @font-face { font-family: 'Yellowtail'; font-weight: 400; font-style: normal; font-display: swap; src: url('{{ "/assets/fonts/yellowtail-latin-400-normal.woff2" | relative_url }}') format('woff2'); }
+
+    /* Escenario: suelo oscuro, papel claro, tinta roja de rotulador y un neón rosa.
+       Las variables --bg, --card, --text, --text-muted y --accent las usan también las herramientas. */
     :root {
-      --bg: #0B0F19;
-      --card: #131B2E;
-      --text: #F3F4F6;
-      --text-muted: #9CA3AF;
-      --accent: #38BDF8;
-      --kiwi: #84CC16;
+      --bg: #17141A;
+      --card: #221E25;
+      --line: #3A3238;
+      --text: #EDE6DA;
+      --text-muted: #B8ADB2;
+      --accent: #E07A6E;
+      --marker: #E0574C;
+      --neon: #FFB3CC;
+      --neon-glow: #FF5C93;
+      --paper: #F3E9D2;
+      --ink: #1C1410;
+      --tape: #3B3A3D;
+      --font-body: 'Courier Prime', ui-monospace, 'Courier New', monospace;
+      --font-display: 'Bodoni Moda', 'Didot', Georgia, serif;
+      --font-card: 'Rye', Georgia, serif;
+      --font-marker: 'Permanent Marker', 'Comic Sans MS', cursive;
+      --font-neon: 'Yellowtail', 'Brush Script MT', cursive;
+      color-scheme: dark;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: system-ui, -apple-system, sans-serif;
+      font-family: var(--font-body);
+      font-size: 17px;
       background: var(--bg);
       color: var(--text);
-      line-height: 1.6;
+      line-height: 1.65;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
     }
-    header {
-      background: rgba(19, 27, 46, 0.8);
-      backdrop-filter: blur(8px);
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-      padding: 1rem 1.5rem;
-    }
-    header .container {
-      max-width: 900px;
+    .wrap {
+      max-width: 1160px;
       margin: 0 auto;
+      padding-left: max(16px, env(safe-area-inset-left, 0px));
+      padding-right: max(16px, env(safe-area-inset-right, 0px));
+    }
+    header.site { border-bottom: 1px solid var(--line); }
+    header.site .wrap {
+      padding-block: 1.3rem;
       display: flex;
+      flex-wrap: wrap;
+      gap: .8rem 1.5rem;
       justify-content: space-between;
       align-items: center;
     }
-    header a.brand {
+    header.site a.brand {
+      font-family: var(--font-display);
+      font-style: italic;
+      font-weight: 400;
+      font-size: 1.5rem;
       color: var(--text);
       text-decoration: none;
-      font-weight: 800;
-      font-size: 1.2rem;
     }
-    header nav a {
-      color: var(--text-muted);
-      text-decoration: none;
-      font-size: 0.9rem;
-      margin-left: 1.2rem;
-      font-weight: 600;
-      transition: color 0.2s;
+    header.site nav { display: flex; flex-wrap: wrap; gap: .4rem 1.4rem; font-size: .95rem; }
+    header.site nav a { color: var(--text-muted); text-decoration: none; font-weight: 400; }
+    header.site nav a:hover, header.site nav a[aria-current="page"] { color: var(--accent); }
+    .neon {
+      font-family: var(--font-neon);
+      font-weight: 400;
+      color: var(--neon);
+      text-shadow: 0 0 6px var(--neon-glow), 0 0 16px #D61F63;
     }
-    header nav a:hover { color: var(--accent); }
-    main {
-      flex: 1;
-      max-width: 900px;
-      width: 100%;
-      margin: 0 auto;
-      padding: 2.5rem 1.5rem;
-    }
-    h1 { font-size: 2.2rem; margin-bottom: 1rem; color: #fff; }
-    h2, h3 { margin: 1.8rem 0 0.8rem 0; color: #E5E7EB; }
-    p { margin-bottom: 1.2rem; color: var(--text-muted); font-size: 1.05rem; }
+    main { flex: 1; width: 100%; }
+    main .page { max-width: 900px; padding-block: 2.5rem 3.5rem; }
+    h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(2rem, 5vw, 2.8rem); line-height: 1.1; margin-bottom: 1rem; color: #fff; text-wrap: balance; }
+    h2, h3 { font-family: var(--font-display); font-style: italic; font-weight: 600; margin: 2rem 0 .8rem; color: var(--accent); }
+    h2 { font-size: 1.7rem; }
+    h3 { font-size: 1.35rem; }
+    p { margin-bottom: 1.2rem; color: var(--text-muted); }
     blockquote {
-      border-left: 4px solid var(--accent);
-      padding: 0.8rem 1.2rem;
+      border-left: 3px solid var(--marker);
+      padding: .9rem 1.2rem;
       background: var(--card);
-      border-radius: 6px;
+      border-radius: 4px;
       margin: 1.5rem 0;
-      color: #E2E8F0;
+      color: var(--text);
     }
-    hr { border: 0; height: 1px; background: rgba(255,255,255,0.1); margin: 2rem 0; }
+    hr { border: 0; height: 1px; background: var(--line); margin: 2rem 0; }
     ul { padding-left: 1.5rem; margin-bottom: 1.5rem; color: var(--text-muted); }
-    li { margin-bottom: 0.6rem; }
-    a { color: var(--accent); text-decoration: none; font-weight: 600; }
-    a:hover { text-decoration: underline; }
-    footer {
-      border-top: 1px solid rgba(255,255,255,0.08);
-      padding: 2rem 1.5rem;
-      text-align: center;
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      background: #080C14;
+    li { margin-bottom: .6rem; }
+    a { color: var(--accent); text-decoration: none; font-weight: 700; }
+    a:hover { text-decoration: underline; color: #F2A79E; }
+    :focus-visible { outline: 2px solid var(--neon); outline-offset: 3px; }
+    code { font-family: var(--font-body); background: var(--card); padding: .05rem .35rem; border-radius: 3px; }
+    footer.site { border-top: 1px solid var(--line); font-size: .9rem; color: var(--text-muted); }
+    footer.site .wrap {
+      padding-block: 1.6rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: .8rem 1.5rem;
+      justify-content: space-between;
     }
+    footer.site p { margin: 0; font-size: .9rem; }
+    footer.site nav { display: flex; flex-wrap: wrap; gap: .4rem 1.2rem; }
   </style>
 </head>
 <body>
-  <header>
-    <div class="container">
-      <a href="{{ "/" | relative_url }}" class="brand">🌐 {{ site.title }}</a>
-      <nav>
-        <a href="{{ "/" | relative_url }}">Inicio</a>
-        <a href="{{ "/herramientas/limpiar-metadatos/" | relative_url }}">Limpiar metadatos</a>
-        <a href="{{ "/herramientas/geotagbatch/" | relative_url }}">GeoTagBatch</a>
-        <a href="{{ "/herramientas/wav-a-mp3/" | relative_url }}">WAV a MP3</a>
-        <a href="{{ "/herramientas/pegar-imagen-png/" | relative_url }}">Pegar imagen PNG</a>
-        <a href="{{ "/herramientas/capturas-a-pdf/" | relative_url }}">Capturas a PDF</a>
+  <header class="site">
+    <div class="wrap">
+      <a href="{{ "/" | relative_url }}" class="brand">{{ site.title }}</a>
+      <nav aria-label="Principal">
+        <a href="{{ "/" | relative_url }}#setlist"{% if page.url == "/" %} aria-current="page"{% endif %}>Herramientas</a>
+        <a href="{{ "/licencias/" | relative_url }}"{% if page.url == "/licencias/" %} aria-current="page"{% endif %}>Créditos</a>
+        <a href="https://github.com/DrKoi/testconciencia" target="_blank" rel="noopener">GitHub</a>
       </nav>
     </div>
   </header>
 
   <main>
-    {{ content }}
+    {% if page.wide %}
+      {{ content }}
+    {% else %}
+      <div class="wrap page">
+        {{ content }}
+      </div>
+    {% endif %}
   </main>
 
-  <footer>
-    <p>&copy; {{ 'now' | date: "%Y" }} {{ site.title }} • {{ site.description }}</p>
-    <p><a href="{{ "/licencias/" | relative_url }}">Créditos y licencias</a></p>
+  <footer class="site">
+    <div class="wrap">
+      <p>Letras y código: DrKoi · © {{ 'now' | date: "%Y" }} · Tus archivos no salen de tu equipo.</p>
+      <nav aria-label="Pie de página">
+        <a href="{{ "/licencias/" | relative_url }}">Créditos y licencias</a>
+        <a href="https://github.com/DrKoi/testconciencia" target="_blank" rel="noopener">GitHub</a>
+      </nav>
+    </div>
   </footer>
 </body>
 </html>

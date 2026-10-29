@@ -1,0 +1,151 @@
+---
+layout: default
+title: TestConCiencia — herramientas que no se llevan tus archivos
+wide: true
+---
+
+<section class="wrap hero">
+  <div class="hero-main">
+    <p class="kicker">Setlist · Lado B <span class="neon">en vivo esta noche</span></p>
+    <h1>Esta noche, todo suena en tu equipo.</h1>
+    <p class="lead">Herramientas gratuitas para tus archivos que funcionan dentro de tu navegador.
+      Nada se sube a ningún servidor, no hace falta cuenta y siguen funcionando sin conexión.</p>
+  </div>
+  {% if site.verso %}
+  <p class="verse">{{ site.verso | strip | newline_to_br }}</p>
+  {% endif %}
+</section>
+
+<section class="wrap setlist" id="setlist" aria-labelledby="setlist-title">
+  <h2 id="setlist-title" class="marker-title">Setlist →</h2>
+  <ol class="cards">
+    <li class="card-slot">
+      <span class="note" aria-hidden="true">abrimos</span>
+      <a class="card" style="--edge: #C2304F; --tilt: -2deg" href="{{ "/herramientas/capturas-a-pdf/" | relative_url }}">
+        <span class="tape" aria-hidden="true"></span>
+        <span class="num">1</span>
+        <svg viewBox="0 0 200 150" aria-hidden="true"><rect x="62" y="14" width="76" height="100" rx="4" fill="#fff" stroke="currentColor" stroke-width="3"/><rect x="52" y="24" width="76" height="100" rx="4" fill="var(--paper)" stroke="currentColor" stroke-width="3"/><path d="M64 48h52M64 62h52M64 76h36" stroke="var(--edge)" stroke-width="4" stroke-linecap="round"/></svg>
+        <span class="name">Capturas a PDF</span>
+        <span class="desc">Une capturas en un PDF, ordenadas por la hora en que las tomaste.</span>
+      </a>
+    </li>
+    <li class="card-slot">
+      <span class="note" aria-hidden="true">sin pausa</span>
+      <a class="card" style="--edge: #2D6A8E; --tilt: 1.5deg" href="{{ "/herramientas/limpiar-metadatos/" | relative_url }}">
+        <span class="tape" aria-hidden="true"></span>
+        <span class="num">2</span>
+        <svg viewBox="0 0 200 150" aria-hidden="true"><path d="M50 50c0-20 100-20 100 0v20c0 35-25 55-50 55s-50-20-50-55z" fill="#fff" stroke="currentColor" stroke-width="3"/><ellipse cx="80" cy="66" rx="12" ry="7" fill="currentColor"/><ellipse cx="120" cy="66" rx="12" ry="7" fill="currentColor"/><path d="M30 60h20M150 60h20" stroke="var(--edge)" stroke-width="4"/></svg>
+        <span class="name">Limpiar metadatos</span>
+        <span class="desc">Quita GPS, cámara, autor y fechas de fotos, PDF, documentos y audio.</span>
+      </a>
+    </li>
+    <li class="card-slot">
+      <span class="note" aria-hidden="true">acústico</span>
+      <a class="card" style="--edge: #3F7D4E; --tilt: -1deg" href="{{ "/herramientas/geotagbatch/" | relative_url }}">
+        <span class="tape" aria-hidden="true"></span>
+        <span class="num">3</span>
+        <svg viewBox="0 0 200 150" aria-hidden="true"><path d="M40 30l40-12 40 12 40-12v100l-40 12-40-12-40 12z" fill="#fff" stroke="currentColor" stroke-width="3"/><path d="M80 18v100M120 30v100" stroke="currentColor" stroke-width="2"/><path d="M100 50c-10 0-16 8-16 16 0 12 16 26 16 26s16-14 16-26c0-8-6-16-16-16z" fill="var(--edge)"/></svg>
+        <span class="name">GeoTagBatch</span>
+        <span class="desc">Escribe coordenadas GPS en tus fotos y las renombra en lote.</span>
+      </a>
+    </li>
+    <li class="card-slot">
+      <span class="note" aria-hidden="true">la lenta</span>
+      <a class="card" style="--edge: #B9741C; --tilt: 2deg" href="{{ "/herramientas/wav-a-mp3/" | relative_url }}">
+        <span class="tape" aria-hidden="true"></span>
+        <span class="num">4</span>
+        <svg viewBox="0 0 200 150" aria-hidden="true"><ellipse cx="88" cy="96" rx="34" ry="30" fill="var(--edge)" stroke="currentColor" stroke-width="3"/><circle cx="88" cy="96" r="9" fill="currentColor"/><path d="M112 74l46-46" stroke="currentColor" stroke-width="6" stroke-linecap="round"/><path d="M150 22l12 12" stroke="currentColor" stroke-width="8" stroke-linecap="round"/></svg>
+        <span class="name">WAV a MP3</span>
+        <span class="desc">Comprime grabaciones a MP3 sin instalar programas.</span>
+      </a>
+    </li>
+    <li class="card-slot">
+      <span class="note" aria-hidden="true">cerramos</span>
+      <a class="card" style="--edge: #7A4E9C; --tilt: -1.5deg" href="{{ "/herramientas/pegar-imagen-png/" | relative_url }}">
+        <span class="tape" aria-hidden="true"></span>
+        <span class="num">5</span>
+        <svg viewBox="0 0 200 150" aria-hidden="true"><path d="M70 130V60a10 10 0 0 1 20 0v30V40a10 10 0 0 1 20 0v50V46a10 10 0 0 1 20 0v48V62a10 10 0 0 1 20 0v40c0 18-16 30-36 30h-14c-14 0-30-10-30-24z" fill="#fff" stroke="currentColor" stroke-width="3"/></svg>
+        <span class="name">Pegar imagen</span>
+        <span class="desc">Pega un pantallazo con Ctrl+V y descárgalo como PNG.</span>
+      </a>
+    </li>
+    <li class="card-slot">
+      <span class="note note-bis" aria-hidden="true">¡bis!</span>
+      <div class="card card-soon" style="--tilt: 1deg">
+        <span class="tape" aria-hidden="true"></span>
+        <span class="num">6</span>
+        <svg viewBox="0 0 200 150" aria-hidden="true"><ellipse cx="100" cy="66" rx="46" ry="28" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="100" cy="66" r="14" fill="currentColor"/><path d="M70 94c-10 20-30 22-34 40M100 96c0 18-12 26-6 44M130 94c10 20 30 22 34 40" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/></svg>
+        <span class="name">Auditor de música IA</span>
+        <span class="desc">Próximamente: busca en un MP3 las huellas de la música hecha con IA.</span>
+      </div>
+    </li>
+  </ol>
+</section>
+
+<section class="liner">
+  <div class="wrap liner-grid">
+    <p><strong>Sonido:</strong> todo en directo, en tu navegador. El servidor solo entrega la página.</p>
+    <p><strong>Entradas:</strong> gratis, sin registro, sin anuncios y con 0 bytes subidos.</p>
+    <p><strong>Banda:</strong> jsPDF, pdf-lib, lamejs y compañía. <a href="{{ "/licencias/" | relative_url }}">Créditos completos</a>.</p>
+  </div>
+</section>
+
+<style>
+  .hero { display: flex; flex-wrap: wrap; gap: 2rem 3rem; align-items: flex-end; padding-block: 3rem 2.5rem; }
+  .hero-main { flex: 999 1 520px; min-width: 0; }
+  .kicker { display: flex; flex-wrap: wrap; gap: .4rem 1.2rem; align-items: baseline; margin-bottom: 1rem;
+    font-size: .8rem; letter-spacing: .2em; text-transform: uppercase; color: var(--text-muted); }
+  .kicker .neon { font-size: 1.9rem; letter-spacing: 0; text-transform: none; }
+  .hero h1 { font-size: clamp(2.6rem, 6.5vw, 4.2rem); line-height: 1; margin-bottom: 1.2rem; }
+  .lead { font-size: 1.05rem; line-height: 1.7; max-width: 36rem; color: #CFC4C8; margin: 0; }
+  .verse { flex: 1 1 280px; min-width: 0; margin: 0; font-family: var(--font-display); font-style: italic; font-weight: 400;
+    font-size: 1.35rem; line-height: 1.55; color: #CFC4C8; }
+
+  .setlist { padding-block: .5rem 3.5rem; }
+  .marker-title { font-family: var(--font-marker); font-style: normal; font-weight: 400; font-size: 2.1rem;
+    color: var(--marker); transform: rotate(-2deg); display: inline-block; margin: 0 0 1.8rem; text-transform: uppercase; }
+  .cards { list-style: none; padding: 0; margin: 0; display: grid; gap: 2.6rem 1.8rem;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+  .cards li { margin: 0; }
+  .card-slot { display: flex; flex-direction: column; gap: .5rem; }
+  .note { font-family: var(--font-marker); font-size: 1.2rem; color: var(--marker); transform: rotate(-3deg); align-self: flex-start; }
+  .note-bis { font-size: 1.45rem; transform: rotate(2deg); }
+  .card {
+    position: relative; display: flex; flex-direction: column; align-items: center; gap: .55rem;
+    padding: 1.6rem 1rem 1.2rem; min-height: 100%;
+    background: var(--paper); color: var(--ink); border: 6px solid var(--edge, #8E8389);
+    text-decoration: none; font-weight: 400;
+    transform: rotate(var(--tilt, 0deg)); box-shadow: 0 14px 30px #00000080;
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
+  a.card:hover, a.card:focus-visible { transform: rotate(0deg) translateY(-4px); box-shadow: 0 20px 38px #000000A0; text-decoration: none; color: var(--ink); }
+  .tape { position: absolute; top: -14px; left: 50%; width: 120px; height: 28px; margin-left: -60px; background: var(--tape); opacity: .92; }
+  .num { align-self: flex-start; font-family: var(--font-card); font-size: 1.15rem; }
+  .card svg { width: 100%; max-width: 180px; height: auto; }
+  .name { font-family: var(--font-card); font-size: 1.45rem; line-height: 1.15; text-align: center; }
+  .desc { font-size: .95rem; line-height: 1.45; text-align: center; color: #4A3A30; }
+  .card-soon { background: var(--card); color: #8E8389; border: 6px dashed #4A4048; box-shadow: none; }
+  .card-soon .desc { color: var(--text-muted); }
+  .card-soon .tape { opacity: .7; }
+
+  .liner { border-top: 1px solid var(--line); }
+  .liner-grid { padding-block: 1.8rem; display: grid; gap: 1rem 2rem; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .liner p { margin: 0; font-size: .95rem; }
+  .liner strong { color: var(--text); }
+
+  @media (max-width: 600px) {
+    .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem .9rem; }
+    .card { padding: 1.3rem .6rem .9rem; border-width: 4px; gap: .4rem; }
+    .card svg { max-width: 110px; }
+    .name { font-size: 1.05rem; }
+    .desc { font-size: .78rem; }
+    .num { font-size: .95rem; }
+    .tape { width: 72px; margin-left: -36px; height: 22px; top: -11px; }
+    .note { font-size: 1rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: none; }
+    a.card:hover, a.card:focus-visible { transform: rotate(var(--tilt, 0deg)); }
+  }
+</style>
