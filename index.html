@@ -9,7 +9,8 @@ wide: true
     <p class="kicker">Setlist · Lado B <span class="neon">en vivo esta noche</span></p>
     <h1>Esta noche, todo suena en tu equipo.</h1>
     <p class="lead">Herramientas gratuitas para tus archivos que funcionan dentro de tu navegador.
-      Nada se sube a ningún servidor, no hace falta cuenta y siguen funcionando sin conexión.</p>
+      Tus archivos no se suben a ningún servidor, no hace falta cuenta y casi todas siguen
+      funcionando sin conexión.</p>
   </div>
   {% if site.verso %}
   <p class="verse">{{ site.verso | strip | newline_to_br }}</p>
@@ -84,7 +85,7 @@ wide: true
 
 <section class="liner">
   <div class="wrap liner-grid">
-    <p><strong>Sonido:</strong> todo en directo, en tu navegador. El servidor solo entrega la página.</p>
+    <p><strong>Sonido:</strong> todo en directo, en tu navegador. El servidor solo entrega la página. <a href="{{ "/licencias/" | relative_url }}#cargada-desde-un-servicio-externo">Una excepción</a>.</p>
     <p><strong>Entradas:</strong> gratis, sin registro, sin anuncios y con 0 bytes subidos.</p>
     <p><strong>Banda:</strong> jsPDF, pdf-lib, lamejs y compañía. <a href="{{ "/licencias/" | relative_url }}">Créditos completos</a>.</p>
   </div>
@@ -97,7 +98,7 @@ wide: true
     font-size: .8rem; letter-spacing: .2em; text-transform: uppercase; color: var(--text-muted); }
   .kicker .neon { font-size: 1.9rem; letter-spacing: 0; text-transform: none; }
   .hero h1 { font-size: clamp(2.6rem, 6.5vw, 4.2rem); line-height: 1; margin-bottom: 1.2rem; }
-  .lead { font-size: 1.05rem; line-height: 1.7; max-width: 36rem; color: #CFC4C8; margin: 0; }
+  .lead { font-size: 1.1em; line-height: 1.7; max-width: 36rem; color: #CFC4C8; margin: 0; }
   .verse { flex: 1 1 280px; min-width: 0; margin: 0; font-family: var(--font-display); font-style: italic; font-weight: 400;
     font-size: 1.35rem; line-height: 1.55; color: #CFC4C8; }
 

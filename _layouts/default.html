@@ -77,7 +77,7 @@
     }
     header.site nav { display: flex; flex-wrap: wrap; gap: .4rem 1.4rem; font-size: .95rem; }
     header.site nav a { color: var(--text-muted); text-decoration: none; font-weight: 400; }
-    header.site nav a:hover, header.site nav a[aria-current="page"] { color: var(--accent); }
+    header.site nav a:hover, header.site nav a[aria-current] { color: var(--accent); }
     .neon {
       font-family: var(--font-neon);
       font-weight: 400;
@@ -116,6 +116,8 @@
     }
     footer.site p { margin: 0; font-size: .9rem; }
     footer.site nav { display: flex; flex-wrap: wrap; gap: .4rem 1.2rem; }
+    footer.site .tools { width: 100%; padding-bottom: 1.2rem; border-bottom: 1px solid var(--line); }
+    footer.site .tools a { font-weight: 400; }
   </style>
 </head>
 <body>
@@ -123,7 +125,7 @@
     <div class="wrap">
       <a href="{{ "/" | relative_url }}" class="brand">{{ site.title }}</a>
       <nav aria-label="Principal">
-        <a href="{{ "/" | relative_url }}#setlist"{% if page.url == "/" %} aria-current="page"{% endif %}>Herramientas</a>
+        <a href="{{ "/" | relative_url }}#setlist"{% if page.url contains "/herramientas/" %} aria-current="true"{% endif %}>Herramientas</a>
         <a href="{{ "/licencias/" | relative_url }}"{% if page.url == "/licencias/" %} aria-current="page"{% endif %}>Créditos</a>
         <a href="https://github.com/DrKoi/testconciencia" target="_blank" rel="noopener">GitHub</a>
       </nav>
@@ -142,6 +144,15 @@
 
   <footer class="site">
     <div class="wrap">
+      <nav class="tools" aria-label="Herramientas">
+        <a href="{{ "/herramientas/capturas-a-pdf/" | relative_url }}">Capturas a PDF</a>
+        <a href="{{ "/herramientas/limpiar-metadatos/" | relative_url }}">Limpiar metadatos</a>
+        <a href="{{ "/herramientas/geotagbatch/" | relative_url }}">GeoTagBatch</a>
+        <a href="{{ "/herramientas/wav-a-mp3/" | relative_url }}">WAV a MP3</a>
+        <a href="{{ "/herramientas/pegar-imagen-png/" | relative_url }}">Pegar imagen</a>
+        <a href="{{ "/herramientas/geotagbatch/privacy.html" | relative_url }}">Privacidad de GeoTagBatch</a>
+        <a href="{{ "/herramientas/geotagbatch/terms.html" | relative_url }}">Términos de GeoTagBatch</a>
+      </nav>
       <p>Letras y código: DrKoi · © {{ 'now' | date: "%Y" }} · Tus archivos no salen de tu equipo.</p>
       <nav aria-label="Pie de página">
         <a href="{{ "/licencias/" | relative_url }}">Créditos y licencias</a>

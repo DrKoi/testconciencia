@@ -43,3 +43,16 @@ servicios (por ejemplo, Suno) guardan en un marco `GEOB`.
 APEv2 sin recodificar el audio. No conviene presentar en el sitio una función para
 «borrar la huella de IA»: contradice al auditor, y plataformas como Spotify, YouTube o las
 distribuidoras piden declarar el contenido generado con IA.
+
+**Fallos conocidos del script de referencia** (señalados en la revisión del PR #4; corregirlos
+al pasarlo al navegador, no en el script):
+
+- El manifiesto C2PA va en CBOR, no en texto: decodificarlo como ASCII y buscar con
+  expresiones regulares mezcla en los valores los bytes de longitud de CBOR (por ejemplo,
+  `providerNamehSuno, Inc`). Hay que leer el CBOR/JUMBF de verdad o usar `c2pa-js`.
+- El escaneo en crudo solo mira los primeros y los últimos 128 KB. Con una portada `APIC`
+  grande, el final de la cabecera ID3 y el inicio del audio quedan fuera. Mejor recorrer los
+  marcos ID3 y leer la cabecera Xing/LAME del primer frame de audio.
+- Con archivos de entre 128 y 256 KB los dos bloques se solapan y se concatenan, lo que puede
+  duplicar o cortar firmas. Si el archivo es pequeño, leerlo entero.
+- Solo se muestra el primer valor de cada etiqueta, y en `TXXX` no se muestra su descripción.
