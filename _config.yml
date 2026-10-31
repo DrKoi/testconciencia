@@ -1,6 +1,11 @@
 title: TestConCiencia
 description: "Herramientas web gratuitas que se ejecutan 100% en tu navegador: tus archivos nunca salen de tu equipo."
 url: "https://www.testconciencia.com"
+# Verso que aparece junto al titular de la portada (déjalo vacío para ocultarlo).
+# Es un verso de ejemplo: cámbialo por una letra tuya.
+verso: |
+  «Que nadie guarde copia
+  de lo que fuimos esta noche.»
 baseurl: ""
 markdown: kramdown
 
@@ -16,6 +21,7 @@ defaults:
       sitemap: false
 
 exclude:
+  - BACKLOG.md
   - Gemfile
   - Gemfile.lock
   - vendor

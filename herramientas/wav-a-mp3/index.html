@@ -58,51 +58,51 @@ title: Conversor WAV a MP3 — TestConCiencia
 <style>
   .c2m { margin: 1.5rem 0 2.5rem; }
   .c2m-drop {
-    border: 2px dashed rgba(56,189,248,0.5);
+    border: 2px dashed rgba(224,122,110,0.5);
     border-radius: 12px;
-    background: var(--card, #131B2E);
+    background: var(--card, #221E25);
     padding: 2.2rem 1rem;
     text-align: center;
     cursor: pointer;
     transition: border-color .2s, background .2s;
   }
   .c2m-drop:hover, .c2m-drop:focus, .c2m-drop.is-over {
-    border-color: var(--accent, #38BDF8);
-    background: #17223b;
+    border-color: var(--accent, #E07A6E);
+    background: #2A2430;
     outline: none;
   }
-  .c2m-drop-inner p { margin: .5rem 0 0; color: var(--text-muted, #9CA3AF); }
+  .c2m-drop-inner p { margin: .5rem 0 0; color: var(--text-muted, #B8ADB2); }
   .c2m-drop-icon { font-size: 1.8rem; }
   .c2m-options {
     display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem;
   }
   .c2m-options label {
     display: flex; flex-direction: column; gap: .3rem;
-    font-size: .85rem; font-weight: 600; color: var(--text-muted, #9CA3AF);
+    font-size: .85rem; font-weight: 600; color: var(--text-muted, #B8ADB2);
   }
   .c2m-options select {
-    background: var(--card, #131B2E); color: var(--text, #F3F4F6);
+    background: var(--card, #221E25); color: var(--text, #EDE6DA);
     border: 1px solid rgba(255,255,255,0.15); border-radius: 8px;
     padding: .5rem .6rem; font-size: .95rem;
   }
   .c2m-list { list-style: none; padding: 0; margin: 1.4rem 0 0; }
   .c2m-item {
-    background: var(--card, #131B2E);
+    background: var(--card, #221E25);
     border: 1px solid rgba(255,255,255,0.08);
     border-radius: 10px;
     padding: .9rem 1rem;
     margin-bottom: .7rem;
   }
   .c2m-item-top { display: flex; justify-content: space-between; gap: 1rem; align-items: baseline; }
-  .c2m-name { font-weight: 700; color: #E5E7EB; word-break: break-all; }
-  .c2m-meta { font-size: .8rem; color: var(--text-muted, #9CA3AF); white-space: nowrap; }
+  .c2m-name { font-weight: 700; color: var(--text, #EDE6DA); word-break: break-all; }
+  .c2m-meta { font-size: .8rem; color: var(--text-muted, #B8ADB2); white-space: nowrap; }
   .c2m-bar { height: 6px; border-radius: 3px; background: rgba(255,255,255,0.1); margin-top: .6rem; overflow: hidden; }
-  .c2m-bar > i { display: block; height: 100%; width: 0; background: var(--accent, #38BDF8); transition: width .2s; }
-  .c2m-status { font-size: .8rem; margin-top: .5rem; color: var(--text-muted, #9CA3AF); }
+  .c2m-bar > i { display: block; height: 100%; width: 0; background: var(--accent, #E07A6E); transition: width .2s; }
+  .c2m-status { font-size: .8rem; margin-top: .5rem; color: var(--text-muted, #B8ADB2); }
   .c2m-status.err { color: #F87171; }
   .c2m-dl {
     display: inline-block; margin-top: .6rem;
-    background: var(--accent, #38BDF8); color: #04121e;
+    background: var(--accent, #E07A6E); color: var(--ink, #1C1410);
     padding: .45rem .9rem; border-radius: 8px; font-weight: 700; font-size: .85rem;
   }
   .c2m-dl:hover { text-decoration: none; filter: brightness(1.08); }
