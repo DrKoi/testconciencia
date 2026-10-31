@@ -2,6 +2,7 @@
  * metaclean-audio.js — eliminación de metadatos en audio (MP3, FLAC, M4A/AAC).
  * Sin dependencias. window.MetaCleanAudio / module.exports.
  * No recodifica el audio: recorta las etiquetas y copia las muestras tal cual.
+ * Expone también readId3v2(), el lector de marcos ID3 que reutiliza el Auditor de música IA.
  */
 (function (root) {
   'use strict';
@@ -17,14 +18,22 @@
   function copy(b) { return b.slice(0); }
   function td(enc, data) { try { return new TextDecoder(enc).decode(data); } catch (e) { return ''; } }
 
-  function decodeFrameText(b, start, end) {
-    var enc = b[start];
-    var data = b.subarray(start + 1, end);
+  // Texto de un marco ID3: byte de codificación + datos.
+  //   0 = ISO-8859-1, 1 = UTF-16 con BOM, 2 = UTF-16BE sin BOM, 3 = UTF-8
+  function decodeId3Text(enc, data) {
     var s;
-    if (enc === 1 || enc === 2) s = td('utf-16', data);
-    else if (enc === 3) s = td('utf-8', data);
+    if (enc === 1 || enc === 2) {
+      var le = enc === 1;
+      if (data.length >= 2 && data[0] === 0xff && data[1] === 0xfe) { le = true; data = data.subarray(2); }
+      else if (data.length >= 2 && data[0] === 0xfe && data[1] === 0xff) { le = false; data = data.subarray(2); }
+      s = td(le ? 'utf-16le' : 'utf-16be', data);
+    } else if (enc === 3) s = td('utf-8', data);
     else { s = ''; for (var i = 0; i < data.length; i++) s += String.fromCharCode(data[i]); }
-    return s.replace(/\0+$/, '').trim();
+    return s.replace(/\0+$/, '');
+  }
+
+  function decodeFrameText(b, start, end) {
+    return decodeId3Text(b[start], b.subarray(start + 1, end)).trim();
   }
 
   // =====================================================================
@@ -65,23 +74,107 @@
   }
 
   function describeId3v2(b, from, to, major, found) {
-    var picture = false, title = null, artist = null, count = 0;
-    var i = from;
-    while (i + 10 <= to) {
-      var id = ascii(b, i, 4);
-      if (!/^[A-Z0-9]{4}$/.test(id)) break;
-      var fsize = major === 4 ? synchsafe(b, i + 4) : u32be(b, i + 4);
-      var body = i + 10;
-      if (fsize <= 0 || body + fsize > to) break;
-      if (id === 'APIC') picture = true;
-      else if (id === 'TIT2') title = decodeFrameText(b, body, body + fsize);
-      else if (id === 'TPE1') artist = decodeFrameText(b, body, body + fsize);
-      count++;
-      i = body + fsize;
-    }
+    var picture = false, title = null, artist = null;
+    var frames = readId3Frames(b, from, to, major, b[from - 5]).frames;
+    frames.forEach(function (f) {
+      if (f.id === 'APIC' || f.id === 'PIC') picture = true;
+      else if (f.id === 'TIT2' || f.id === 'TT2') title = decodeFrameText(f.data, 0, f.data.length);
+      else if (f.id === 'TPE1' || f.id === 'TP1') artist = decodeFrameText(f.data, 0, f.data.length);
+    });
     if (title || artist) found.push('🎵 ' + shorten([artist, title].filter(Boolean).join(' — ')));
     if (picture) found.push('🖼️ Carátula');
-    if (count && !title && !artist && !picture) found.push('🏷️ Etiquetas ID3v2');
+    if (frames.length && !title && !artist && !picture) found.push('🏷️ Etiquetas ID3v2');
+  }
+
+  // ---------------------------------------------------------------------
+  //  Lector de ID3v2 (2.2, 2.3 y 2.4) que recorre los marcos uno a uno.
+  //  También lo usa el Auditor de música IA.
+  // ---------------------------------------------------------------------
+
+  // Deshace la «desincronización» de ID3: cada FF 00 vuelve a ser FF.
+  function unsync(data) {
+    var out = new Uint8Array(data.length), w = 0;
+    for (var i = 0; i < data.length; i++) {
+      out[w++] = data[i];
+      if (data[i] === 0xff && data[i + 1] === 0x00) i++;
+    }
+    return out.subarray(0, w);
+  }
+
+  function validId(id, len) { return new RegExp('^[A-Z0-9]{' + len + '}$').test(id); }
+
+  // Recorre los marcos de una etiqueta. `from`/`to` delimitan el cuerpo (tras la cabecera de 10 bytes).
+  // Devuelve { frames: [{ id, offset, size, data, flags, compressed, encrypted }], warnings: [] }.
+  function readId3Frames(b, from, to, major, tagFlags) {
+    var warnings = [];
+    var frames = [];
+    var body = b.subarray(from, to);
+    var base = from;               // posición en el archivo del inicio de `body` (aproximada si hay desincronización)
+    if ((tagFlags & 0x80) && major < 4) { body = unsync(body); warnings.push('Etiqueta con desincronización (deshecha al leer).'); }
+
+    var i = 0;
+    if (tagFlags & 0x40 && major >= 3) {   // cabecera extendida
+      var ext = major === 4 ? synchsafe(body, 0) : u32be(body, 0) + 4;
+      if (ext > 0 && ext < body.length) i = ext;
+    }
+
+    var idLen = major === 2 ? 3 : 4;
+    var headLen = major === 2 ? 6 : 10;
+    function sizeAt(p, safe) {
+      if (major === 2) return body[p + 3] << 16 | body[p + 4] << 8 | body[p + 5];
+      return safe ? synchsafe(body, p + 4) : u32be(body, p + 4);
+    }
+    function looksLikeNext(p) { return p === body.length || p + headLen > body.length || body[p] === 0 || validId(ascii(body, p, idLen), idLen); }
+
+    while (i + headLen <= body.length) {
+      var id = ascii(body, i, idLen);
+      if (!validId(id, idLen)) break;            // relleno (ceros) o basura
+      var fsize = sizeAt(i, major === 4);
+      // Algunos programas escriben tamaños sin «synchsafe» en ID3v2.4.
+      if (major === 4 && !looksLikeNext(i + headLen + fsize)) {
+        var alt = sizeAt(i, false);
+        if (looksLikeNext(i + headLen + alt)) fsize = alt;
+      }
+      if (i + headLen + fsize > body.length) { warnings.push('El marco ' + id + ' se sale de la etiqueta; se detiene la lectura.'); break; }
+      var fl = major === 2 ? 0 : (body[i + 8] << 8 | body[i + 9]);
+      var data = body.subarray(i + headLen, i + headLen + fsize);
+      var f = { id: id, offset: base + i, size: fsize, flags: fl, compressed: false, encrypted: false };
+      if (major === 3) {
+        if (fl & 0x0080) { f.compressed = true; data = data.subarray(4); }
+        if (fl & 0x0040) { f.encrypted = true; data = data.subarray(1); }
+        if (fl & 0x0020) data = data.subarray(1);
+      } else if (major === 4) {
+        if (fl & 0x0040) data = data.subarray(1);
+        if (fl & 0x0008) f.compressed = true;
+        if (fl & 0x0004) { f.encrypted = true; data = data.subarray(1); }
+        if (fl & 0x0001) data = data.subarray(4);
+        if ((fl & 0x0002) || (tagFlags & 0x80)) data = unsync(data);
+      }
+      f.data = data;
+      frames.push(f);
+      i += headLen + fsize;
+    }
+    return { frames: frames, warnings: warnings };
+  }
+
+  // Lee todas las etiquetas ID3v2 seguidas del principio del archivo.
+  // Devuelve { tags: [{ offset, size, version, flags, frames, warnings }], end }.
+  function readId3v2(bytes) {
+    var tags = [];
+    var start = 0;
+    while (start + 10 <= bytes.length && ascii(bytes, start, 3) === 'ID3') {
+      var major = bytes[start + 3];
+      var flags = bytes[start + 5];
+      var size = 10 + synchsafe(bytes, start + 6);
+      if (flags & 0x10) size += 10;
+      var to = Math.min(start + 10 + synchsafe(bytes, start + 6), bytes.length);
+      var r = major >= 2 && major <= 4 ? readId3Frames(bytes, start + 10, to, major, flags)
+        : { frames: [], warnings: ['Versión ID3v2.' + major + ' desconocida.'] };
+      tags.push({ offset: start, size: size, version: '2.' + major + '.' + bytes[start + 4], flags: flags,
+        frames: r.frames, warnings: r.warnings });
+      start += size;
+    }
+    return { tags: tags, end: Math.min(start, bytes.length) };
   }
 
   // =====================================================================
@@ -307,7 +400,10 @@
     writeU32(b, o + 4, v >>> 0);
   }
 
-  var api = { cleanMp3: cleanMp3, cleanFlac: cleanFlac, cleanM4a: cleanM4a, cleanIsoBmff: cleanIsoBmff };
+  var api = {
+    cleanMp3: cleanMp3, cleanFlac: cleanFlac, cleanM4a: cleanM4a, cleanIsoBmff: cleanIsoBmff,
+    readId3v2: readId3v2, readId3Frames: readId3Frames, decodeId3Text: decodeId3Text, synchsafe: synchsafe
+  };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.MetaCleanAudio = api;
 })(typeof self !== 'undefined' ? self : this);

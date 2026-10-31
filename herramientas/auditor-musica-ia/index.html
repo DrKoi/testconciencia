@@ -1,0 +1,438 @@
+---
+layout: default
+title: Auditor de música IA — busca las huellas de la IA en un MP3 — TestConCiencia
+---
+
+<h1>🎧 Auditor de música IA</h1>
+
+<blockquote>
+  Carga un MP3 y mira qué huellas de IA lleva dentro: el manifiesto C2PA que algunos
+  servicios (por ejemplo, Suno) guardan en el archivo, todas las etiquetas ID3 y los
+  datos técnicos del audio. Todo se analiza en tu navegador; el archivo no se sube a ningún sitio.
+</blockquote>
+
+<div class="am">
+  <div id="drop" class="am-drop" tabindex="0" role="button" aria-label="Seleccionar un archivo MP3">
+    <input id="file" type="file" accept="audio/mpeg,.mp3" hidden>
+    <div class="am-drop-inner">
+      <span class="am-drop-icon" aria-hidden="true">🔍</span>
+      <p><strong>Arrastra aquí un MP3</strong><br>o haz clic para elegirlo</p>
+      <p class="am-drop-sub">MP3 · se lee en tu equipo, sin subirlo</p>
+    </div>
+  </div>
+
+  <p id="status" class="am-status" role="status" aria-live="polite"></p>
+  <div id="result" class="am-result" hidden></div>
+</div>
+
+<h2>Cómo leer el resultado</h2>
+<ul>
+  <li><strong>«Huellas de IA encontradas»</strong> significa que el archivo trae datos que lo relacionan
+      con un servicio de IA: un manifiesto C2PA que declara origen generado con IA o textos conocidos de
+      ese servicio. Son datos que el archivo dice de sí mismo, no un análisis del sonido.</li>
+  <li><strong>No encontrar huellas no prueba que lo haya hecho una persona.</strong> Basta con volver a
+      codificar el audio o limpiar las etiquetas (por ejemplo, con
+      <a href="{{ "/herramientas/limpiar-metadatos/" | relative_url }}">Limpiar metadatos</a>) para que
+      desaparezcan. Esta herramienta nunca dirá «hecho por humanos».</li>
+  <li><strong><code>Lavf…</code> o <code>Lavc…</code> no indican IA por sí solos.</strong> Son la marca de
+      FFmpeg, que usan muchísimos programas normales de audio (editores, conversores, plataformas). Aquí
+      solo cuentan como dato de contexto, nunca como prueba.</li>
+  <li>Los textos que se buscan son, por ahora, <strong>solo de Suno</strong>. Para otros servicios (Udio y
+      demás) hacen falta archivos de muestra reales antes de añadir sus patrones. Si tienes alguno,
+      <a href="https://github.com/DrKoi/testconciencia/issues" target="_blank" rel="noopener">avísame en GitHub</a>.</li>
+</ul>
+
+<h2>¿Qué comprueba exactamente?</h2>
+<ul>
+  <li><strong>Manifiesto C2PA:</strong> lo lee del marco <code>GEOB</code> como lo que es, cajas JUMBF con
+      datos CBOR, sin buscar textos a ciegas. Muestra quién lo firma, con qué programa se generó, las
+      acciones declaradas y el <em>tipo de origen</em> IPTC (por ejemplo, <code>trainedAlgorithmicMedia</code>,
+      «creado con IA generativa»). Si las etiquetas ID3 se borraron pero el bloque quedó suelto en el archivo,
+      también lo encuentra.</li>
+  <li><strong>Integridad del C2PA:</strong> comprueba con la criptografía del navegador (WebCrypto) que la firma
+      del manifiesto corresponde al certificado que lleva, que cada aserción coincide con su hash firmado
+      y que el audio no ha cambiado desde que se firmó.</li>
+  <li><strong>Etiquetas:</strong> recorre todos los marcos ID3v2 (2.2, 2.3 y 2.4) y muestra todos sus valores,
+      incluida la descripción de los <code>TXXX</code>. La portada <code>APIC</code> y los objetos binarios se
+      resumen; la letra <code>USLT</code> se ve en vista previa. También lee ID3v1 y APEv2.</li>
+  <li><strong>Audio:</strong> duración, bitrate, frecuencia de muestreo, canales y el codificador que aparece en
+      la cabecera Xing/LAME del primer frame.</li>
+  <li><strong>Bytes del archivo:</strong> busca textos conocidos en el archivo <em>entero</em>, no solo al
+      principio y al final, para encontrar restos que hayan quedado fuera de las etiquetas.</li>
+</ul>
+
+<h2>Lo que no comprueba</h2>
+<ul>
+  <li><strong>Si el firmante es de fiar.</strong> La herramienta verifica que la firma sea correcta, pero no
+      contrasta el certificado con la lista de confianza oficial de C2PA ni comprueba revocaciones. Un
+      manifiesto puede estar bien firmado por cualquiera; por eso se muestra el nombre del firmante para
+      que lo valores tú.</li>
+  <li><strong>El sonido.</strong> No hay ningún detector que «escuche» el audio. Solo se leen los datos
+      incrustados.</li>
+  <li>Sobre la biblioteca oficial <code>c2pa-js</code> de la Content Authenticity Initiative (licencia MIT):
+      se valoró y por ahora no se incluye. Pesa unos 9 MB en WebAssembly, necesita un paso de compilación
+      que este sitio no tiene y no añade aquí lo que falta (la lista de confianza). Toda la lectura y la
+      verificación de esta página están escritas a mano y no dependen de ninguna biblioteca.</li>
+</ul>
+
+<style>
+  .am { margin: 1.5rem 0 2.5rem; }
+  .am-drop {
+    border: 2px dashed rgba(224,122,110,0.5); border-radius: 12px; background: var(--card, #221E25);
+    padding: 2.2rem 1rem; text-align: center; cursor: pointer; transition: border-color .2s, background .2s;
+  }
+  .am-drop:hover, .am-drop:focus, .am-drop.is-over { border-color: var(--accent, #E07A6E); background: #2A2430; outline: none; }
+  .am-drop-inner p { margin: .5rem 0 0; color: var(--text-muted, #B8ADB2); }
+  .am-drop-icon { font-size: 1.8rem; }
+  .am-drop-sub { font-size: .8rem; letter-spacing: .04em; text-transform: uppercase; opacity: .7; }
+  .am-status { font-size: .9rem; margin: 1rem 0 0; min-height: 1.2em; }
+  .am-status.err { color: #F87171; }
+  .am-result { margin-top: 1.2rem; }
+  .am-file { font-weight: 700; color: var(--text, #EDE6DA); word-break: break-all; margin-bottom: .8rem; }
+  .am-verdict { border-radius: 12px; padding: 1.1rem 1.2rem; margin-bottom: 1.4rem; border: 1px solid; }
+  .am-verdict h2 { margin: 0 0 .4rem; font-size: 1.5rem; }
+  .am-verdict h2:focus { outline: none; }
+  .am-verdict p { margin: .4rem 0 0; color: var(--text, #EDE6DA); }
+  .am-verdict.found { background: rgba(248,113,113,0.10); border-color: rgba(248,113,113,0.45); }
+  .am-verdict.found h2 { color: #FCA5A5; }
+  .am-verdict.none { background: var(--card, #221E25); border-color: rgba(255,255,255,0.15); }
+  .am-verdict.none h2 { color: var(--text, #EDE6DA); }
+  .am-warn { color: #FBBF24; }
+  .am-section { background: var(--card, #221E25); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px;
+    padding: .9rem 1rem; margin-bottom: 1rem; }
+  .am-section > h3 { margin: 0 0 .7rem; font-size: 1.2rem; }
+  .am-section h4 { margin: 1rem 0 .4rem; font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted, #B8ADB2); }
+  .am-section h4:first-of-type { margin-top: 0; }
+  .am-section p { margin: .3rem 0 .6rem; font-size: .92rem; }
+  .am-ev { list-style: none; padding: 0; margin: 0; }
+  .am-ev li { padding: .55rem 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 0; }
+  .am-ev li:first-child { border-top: 0; }
+  .am-chip { display: inline-block; font-size: .72rem; padding: .1rem .5rem; border-radius: 999px; margin-right: .4rem;
+    border: 1px solid; vertical-align: 1px; text-transform: uppercase; letter-spacing: .04em; }
+  .am-chip.ia { background: rgba(248,113,113,0.14); color: #FCA5A5; border-color: rgba(248,113,113,0.35); }
+  .am-chip.contexto { background: rgba(255,255,255,0.06); color: var(--text-muted, #B8ADB2); border-color: rgba(255,255,255,0.2); }
+  .am-chip.ok { background: rgba(132,204,22,0.14); color: #BEF264; border-color: rgba(132,204,22,0.35); }
+  .am-chip.bad { background: rgba(248,113,113,0.14); color: #FCA5A5; border-color: rgba(248,113,113,0.35); }
+  .am-chip.unk { background: rgba(251,191,36,0.12); color: #FCD34D; border-color: rgba(251,191,36,0.35); }
+  .am-ev-title { color: var(--text, #EDE6DA); font-weight: 700; }
+  .am-val { font-family: var(--font-body); color: var(--text, #EDE6DA); word-break: break-word; }
+  .am-src { font-size: .8rem; color: var(--text-muted, #B8ADB2); }
+  .am-note { font-size: .85rem; color: var(--text-muted, #B8ADB2); margin-top: .25rem; }
+  .am-tbl-wrap { overflow-x: auto; }
+  .am-tbl { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  .am-tbl th, .am-tbl td { text-align: left; vertical-align: top; padding: .45rem .6rem; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .am-tbl th { color: var(--text-muted, #B8ADB2); font-weight: 400; white-space: nowrap; }
+  .am-tbl td { color: var(--text, #EDE6DA); word-break: break-word; }
+  .am-tbl code { white-space: nowrap; }
+  .am-multi { margin: 0; padding-left: 1.1rem; }
+  .am-multi li { margin: 0; }
+  .am details { margin-top: .4rem; }
+  .am summary { cursor: pointer; color: var(--accent, #E07A6E); font-size: .88rem; }
+  .am pre { white-space: pre-wrap; word-break: break-word; font-size: .8rem; background: #1A161C; padding: .6rem .7rem;
+    border-radius: 6px; color: var(--text, #EDE6DA); max-height: 22rem; overflow: auto; margin: .4rem 0 0; }
+  .am-checks { list-style: none; padding: 0; margin: .2rem 0 .6rem; }
+  .am-checks li { margin: .35rem 0; font-size: .92rem; color: var(--text, #EDE6DA); }
+</style>
+
+<script src="{{ "/herramientas/limpiar-metadatos/metaclean-audio.js" | relative_url }}?v=2"></script>
+<script src="auditor.js?v=1"></script>
+<script>
+(function () {
+  var drop = document.getElementById('drop');
+  var input = document.getElementById('file');
+  var statusEl = document.getElementById('status');
+  var result = document.getElementById('result');
+  var busy = false;
+
+  drop.addEventListener('click', function () { input.click(); });
+  drop.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); }
+  });
+  input.addEventListener('change', function () { if (input.files[0]) run(input.files[0]); input.value = ''; });
+  ['dragenter', 'dragover'].forEach(function (ev) {
+    drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('is-over'); });
+  });
+  ['dragleave', 'drop'].forEach(function (ev) {
+    drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('is-over'); });
+  });
+  drop.addEventListener('drop', function (e) {
+    if (e.dataTransfer && e.dataTransfer.files[0]) run(e.dataTransfer.files[0]);
+  });
+
+  function setStatus(text, err) { statusEl.textContent = text; statusEl.className = 'am-status' + (err ? ' err' : ''); }
+
+  function run(file) {
+    if (busy) return;
+    if (!/\.mp3$/i.test(file.name) && file.type !== 'audio/mpeg') {
+      setStatus('Ese archivo no parece un MP3. Esta herramienta solo analiza MP3.', true);
+      return;
+    }
+    busy = true;
+    result.hidden = true;
+    setStatus('Analizando «' + file.name + '»…');
+    file.arrayBuffer()
+      .then(function (ab) { return AuditorMusica.audit(new Uint8Array(ab)); })
+      .then(function (rep) { render(file, rep); setStatus(''); })
+      .catch(function (e) { setStatus('No se pudo analizar el archivo: ' + (e && e.message || e), true); })
+      .then(function () { busy = false; });
+  }
+
+  // ------------------------------------------------------------------ DOM
+  function el(tag, attrs, kids) {
+    var n = document.createElement(tag);
+    if (attrs) Object.keys(attrs).forEach(function (k) {
+      if (k === 'text') n.textContent = attrs[k];
+      else if (k === 'class') n.className = attrs[k];
+      else n.setAttribute(k, attrs[k]);
+    });
+    (kids || []).forEach(function (c) {
+      if (c == null || c === false) return;
+      n.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+    });
+    return n;
+  }
+  function chip(kind, text) { return el('span', { class: 'am-chip ' + kind, text: text }); }
+  function section(title, kids) { return el('section', { class: 'am-section' }, [el('h3', { text: title })].concat(kids)); }
+  function table(rows) {
+    return el('div', { class: 'am-tbl-wrap' }, [el('table', { class: 'am-tbl' }, [el('tbody', null, rows.map(function (r) {
+      return el('tr', null, [el('th', { scope: 'row' }, [r[0]]), el('td', null, [r[1]])]);
+    }))])]);
+  }
+  function fmtBytes(n) {
+    if (n < 1024) return n + ' B';
+    if (n < 1048576) return (n / 1024).toFixed(1).replace('.', ',') + ' KB';
+    return (n / 1048576).toFixed(2).replace('.', ',') + ' MB';
+  }
+  function fmtTime(s) {
+    var m = Math.floor(s / 60), r = s - m * 60;
+    return m + ':' + (r < 10 ? '0' : '') + r.toFixed(2).replace('.', ',') + ' (' + s.toFixed(2).replace('.', ',') + ' s)';
+  }
+  function fmtDate(d) {
+    if (!(d instanceof Date) || isNaN(d)) return String(d);
+    return d.toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' });
+  }
+
+  // CBOR/JSON → texto legible, sin volcar binarios.
+  function pretty(v, ind, depth) {
+    ind = ind || '';
+    depth = depth || 0;
+    v = AuditorMusica.plain(v);
+    if (depth > 12) return '…';
+    if (v instanceof Uint8Array) return '‹' + v.length + ' bytes›';
+    if (Array.isArray(v)) {
+      if (!v.length) return '[]';
+      return '[\n' + v.map(function (x) { return ind + '  ' + pretty(x, ind + '  ', depth + 1); }).join(',\n') + '\n' + ind + ']';
+    }
+    if (v && typeof v === 'object') {
+      var keys = Object.keys(v);
+      if (!keys.length) return '{}';
+      return '{\n' + keys.map(function (k) { return ind + '  ' + k + ': ' + pretty(v[k], ind + '  ', depth + 1); }).join(',\n') + '\n' + ind + '}';
+    }
+    if (typeof v === 'string') return JSON.stringify(v.length > 2000 ? v.slice(0, 2000) + '…' : v);
+    return String(v);
+  }
+
+  // --------------------------------------------------------------- render
+  function render(file, rep) {
+    result.innerHTML = '';
+    result.appendChild(el('p', { class: 'am-file', text: '📄 ' + file.name + ' · ' + fmtBytes(rep.size) }));
+    result.appendChild(renderVerdict(rep));
+    result.appendChild(renderEvidence(rep));
+    rep.c2pa.forEach(function (store) { result.appendChild(renderC2pa(store)); });
+    if (!rep.c2pa.length) result.appendChild(section('Manifiesto C2PA', [el('p', { text: 'No se encontró ningún manifiesto C2PA en el archivo.' })]));
+    result.appendChild(renderAudio(rep));
+    result.appendChild(renderTags(rep));
+    result.appendChild(renderScan(rep));
+    result.hidden = false;
+    var heading = result.querySelector('h2');
+    heading.setAttribute('tabindex', '-1');
+    heading.focus();
+  }
+
+  function renderVerdict(rep) {
+    var found = rep.aiCount > 0, kids = [];
+    if (found) {
+      kids.push(el('h2', { text: rep.aiCount === 1 ? '1 huella de IA encontrada' : rep.aiCount + ' huellas de IA encontradas' }));
+      kids.push(el('p', { text: 'El archivo contiene datos que lo relacionan con un servicio de IA. Son datos incrustados en el archivo, no un análisis del sonido.' }));
+    } else {
+      kids.push(el('h2', { text: 'No se encontraron huellas de IA' }));
+      kids.push(el('p', null, [el('strong', { text: 'Esto no demuestra que lo haya hecho una persona. ' }),
+        'Volver a codificar el audio o limpiar sus etiquetas borra estas huellas, y solo se buscan las de los servicios que conocemos.']));
+    }
+    rep.warnings.forEach(function (w) { kids.push(el('p', { class: 'am-warn', text: '⚠️ ' + w })); });
+    return el('div', { class: 'am-verdict ' + (found ? 'found' : 'none') }, kids);
+  }
+
+  function renderEvidence(rep) {
+    var ia = rep.evidence.filter(function (e) { return e.kind === 'ia'; });
+    var ctx = rep.evidence.filter(function (e) { return e.kind === 'contexto'; });
+    function list(items) {
+      return el('ul', { class: 'am-ev' }, items.map(function (e) {
+        return el('li', null, [
+          chip(e.kind, e.kind === 'ia' ? 'Huella de IA' : 'Contexto'),
+          el('span', { class: 'am-ev-title', text: e.title + ': ' }),
+          el('span', { class: 'am-val', text: e.value }),
+          el('div', { class: 'am-src', text: 'Dónde: ' + e.sources.join(' · ') }),
+          e.note === 'FFMPEG' ? el('div', { class: 'am-note', text: 'Es la marca de FFmpeg, que usan muchos programas de audio normales. No indica IA por sí sola.' }) : null
+        ]);
+      }));
+    }
+    return section('Huellas', [
+      el('h4', { text: 'Encontradas' }),
+      ia.length ? list(ia) : el('p', { text: 'Ninguna huella de IA conocida.' }),
+      el('h4', { text: 'Datos de contexto' }),
+      ctx.length ? list(ctx) : el('p', { text: 'Ninguno.' }),
+      el('h4', { text: 'No encontradas' }),
+      el('p', { text: notFound(rep) })
+    ]);
+  }
+
+  function notFound(rep) {
+    var missing = [];
+    var hasC2pa = rep.c2pa.some(function (s) { return s.ok && s.manifests.length; });
+    var hasType = rep.evidence.some(function (e) { return e.title === 'Tipo de origen declarado en C2PA'; });
+    if (!hasC2pa) missing.push('manifiesto C2PA');
+    else if (!hasType) missing.push('tipo de origen IPTC en el C2PA');
+    var titles = rep.evidence.map(function (e) { return e.title; });
+    ['Enlace a una canción de Suno', 'Texto «made with suno»', 'Identificador de Suno', 'Nombre de un modelo de Suno («chirp»)',
+      'Certificado raíz de Suno para C2PA'].forEach(function (t) { if (titles.indexOf(t) < 0) missing.push(t.charAt(0).toLowerCase() + t.slice(1)); });
+    return missing.length ? 'No aparecen: ' + missing.join(', ') + '.' : 'Se encontraron todas las huellas que se buscan.';
+  }
+
+  function check(state, text) {
+    var c = state === true ? chip('ok', 'Correcto') : state === false ? chip('bad', 'Falla') : chip('unk', 'Sin comprobar');
+    return el('li', null, [c, text]);
+  }
+
+  function renderC2pa(store) {
+    var title = 'Manifiesto C2PA (' + store.where + ', ' + fmtBytes(store.size) + ')';
+    if (!store.ok) return section(title, [el('p', { class: 'am-warn', text: 'No se puede leer: ' + store.error + '.' })]);
+    var kids = [];
+    if (store.manifests.length > 1) kids.push(el('p', { text: 'Contiene ' + store.manifests.length + ' manifiestos. El último es el activo; los anteriores describen versiones previas.' }));
+    store.manifests.slice().reverse().forEach(function (m) {
+      var s = m.summary || {}, sig = m.signature, rows = [];
+      if (s.signer) rows.push(['Firmante', s.signer]);
+      if (s.issuer) rows.push(['Emitido por', s.issuer]);
+      if (sig && sig.time) rows.push(['Fecha de firma', fmtDate(sig.time) + ' — ' + sig.timeSource]);
+      if (s.generator && s.generator.length) rows.push(['Generado con', s.generator.join(' · ')]);
+      if (s.title) rows.push(['Título', s.title]);
+      if (s.format) rows.push(['Formato', s.format]);
+      rows.push(['Identificador', m.label || '—']);
+      if (s.instanceId) rows.push(['ID de instancia', s.instanceId]);
+      rows.push(['Versión del claim', String(m.claimVersion || '—')]);
+      (s.actions || []).forEach(function (a) {
+        var bits = [a.action];
+        if (a.agent) bits.push('con ' + a.agent);
+        if (a.when) bits.push(String(a.when));
+        if (a.sourceType) { var st = AuditorMusica.sourceType(a.sourceType); bits.push(st.text + ' (' + st.code + ')'); }
+        if (a.description) bits.push(a.description);
+        rows.push(['Acción', bits.join(' · ')]);
+      });
+      if (sig) rows.push(['Algoritmo de firma', sig.alg]);
+
+      var checks = el('ul', { class: 'am-checks' }, [
+        sig ? check(sig.verified, ' Firma: ' + sig.reason) : check(false, ' Sin firma.'),
+        m.hashedUris.ok + m.hashedUris.bad + m.hashedUris.missing === 0 ? check(null, ' Aserciones: el claim no enumera ninguna.')
+          : check(m.hashedUris.bad || m.hashedUris.missing ? false : true,
+            ' Aserciones: ' + m.hashedUris.ok + ' coinciden con su hash' +
+            (m.hashedUris.bad ? ', ' + m.hashedUris.bad + ' no coinciden' : '') +
+            (m.hashedUris.missing ? ', ' + m.hashedUris.missing + ' faltan' : '') + '.'),
+        m.active ? (m.dataHash ? check(m.dataHash.ok, ' Audio: ' + m.dataHash.reason) : check(null, ' Audio: el manifiesto no trae hash del audio.')) : null,
+        check(null, ' Confianza en el firmante: no se contrasta con la lista oficial de C2PA. Valora tú si el nombre del firmante es creíble.')
+      ]);
+
+      var asserts = el('details', null, [el('summary', { text: 'Ver las ' + m.assertions.length + ' aserciones' })].concat(
+        m.assertions.map(function (a) {
+          var body = a.kind === 'binary' ? '‹' + a.size + ' bytes, ' + a.types.join(', ') + '›'
+            : a.kind === 'error' ? 'No se puede leer: ' + a.error : pretty(a.data);
+          return el('div', null, [
+            el('p', null, [a.hash === true ? chip('ok', 'hash ok') : a.hash === false ? chip('bad', 'hash falla') : chip('unk', 'sin hash'),
+              el('code', { text: a.label })]),
+            el('pre', { text: body })
+          ]);
+        })));
+      var claim = el('details', null, [el('summary', { text: 'Ver el claim completo' }), el('pre', { text: pretty(m.claim) })]);
+
+      kids.push(el('h4', { text: m.active ? 'Manifiesto activo' : 'Manifiesto anterior' }));
+      kids.push(checks, table(rows), asserts, claim);
+      m.problems.forEach(function (p) { kids.push(el('p', { class: 'am-warn', text: '⚠️ ' + p })); });
+    });
+    return section(title, kids);
+  }
+
+  function renderAudio(rep) {
+    var a = rep.mpeg;
+    if (!a) return section('Datos técnicos del audio', [el('p', { class: 'am-warn', text: 'No se encontró ningún frame MPEG válido: puede que no sea un MP3.' })]);
+    var rows = [
+      ['Duración', fmtTime(a.duration) + (a.estimated ? ' — estimada a partir del bitrate' : '')],
+      ['Bitrate', a.bitrate + ' kbps ' + (a.vbr ? '(variable, media)' : '(constante)')],
+      ['Frecuencia de muestreo', a.rate + ' Hz'],
+      ['Canales', a.channels + ' · ' + a.mode],
+      ['Formato', 'MPEG-' + a.version + ' Layer ' + ['I', 'II', 'III'][a.layer - 1]],
+      ['Cabecera del primer frame', a.header ? a.header + (a.header === 'Info' ? ' (CBR)' : '') : 'ninguna (sin Xing/Info/VBRI)'],
+      ['Codificador (cabecera LAME)', a.encoder || 'no indicado'],
+      ['Empieza el audio en', 'byte ' + a.offset.toLocaleString('es-ES') + (a.gap ? ' (' + a.gap + ' bytes sin identificar antes)' : '')]
+    ];
+    var kids = [table(rows)];
+    if (a.encoder && /^Lav[fc]/.test(a.encoder)) kids.push(el('p', { class: 'am-note', text: a.encoder + ' es la marca de FFmpeg: indica qué programa codificó el audio, no si se hizo con IA.' }));
+    return section('Datos técnicos del audio', kids);
+  }
+
+  function renderTags(rep) {
+    var kids = [];
+    if (!rep.id3.length) kids.push(el('p', { text: 'El archivo no tiene etiqueta ID3v2.' }));
+    rep.id3.forEach(function (t) {
+      kids.push(el('p', { text: 'ID3v' + t.version + ' · ' + fmtBytes(t.size) + ' al inicio del archivo.' }));
+      t.warnings.forEach(function (w) { kids.push(el('p', { class: 'am-warn', text: '⚠️ ' + w })); });
+    });
+    if (rep.frames.length) {
+      kids.push(el('div', { class: 'am-tbl-wrap' }, [el('table', { class: 'am-tbl' }, [
+        el('thead', null, [el('tr', null, [el('th', { text: 'Marco' }), el('th', { text: 'Qué es' }), el('th', { text: 'Valor' })])]),
+        el('tbody', null, rep.frames.map(function (f) {
+          return el('tr', null, [el('td', null, [el('code', { text: f.id })]), el('td', { text: f.name }), el('td', null, frameValue(f))]);
+        }))
+      ])]));
+    }
+    rep.endTags.forEach(function (t) {
+      kids.push(el('p', { text: t.kind + ' al final del archivo (' + fmtBytes(t.size) + ').' }));
+      if (t.fields && t.fields.length) kids.push(table(t.fields));
+    });
+    return section('Etiquetas', kids);
+  }
+
+  function frameValue(f) {
+    var out = [];
+    if (f.note) out.push(el('div', { class: 'am-warn', text: f.note }));
+    if (f.desc) out.push(el('div', { class: 'am-src', text: 'Descripción: «' + f.desc + '»' + (f.lang ? ' · idioma ' + f.lang : '') }));
+    else if (f.lang) out.push(el('div', { class: 'am-src', text: 'Idioma ' + f.lang }));
+    if (f.key === 'APIC' && f.binary) {
+      out.push(el('div', { text: 'Imagen ' + f.binary.mime + ' · ' + f.binary.picType + ' · ' + fmtBytes(f.binary.size) }));
+    } else if (f.key === 'GEOB' && f.binary) {
+      out.push(el('div', { text: 'Objeto ' + (f.binary.mime || 'sin tipo') + (f.binary.filename ? ' «' + f.binary.filename + '»' : '') + ' · ' + fmtBytes(f.binary.size) }));
+      if (f.c2pa) out.push(el('div', { class: 'am-src', text: 'Es un manifiesto C2PA: ver su apartado.' }));
+    } else if (f.lyrics) {
+      var prev = f.lyrics.slice(0, 4).join(' / ') + (f.lyrics.length > 4 ? ' …' : '');
+      out.push(el('div', { text: f.lyrics.length + (f.lyrics.length === 1 ? ' línea: ' : ' líneas: ') + prev }));
+      if (f.lyrics.length > 4) out.push(el('details', null, [el('summary', { text: 'Ver la letra completa' }), el('pre', { text: f.values[0] })]));
+    } else if (f.values.length > 1) {
+      out.push(el('ul', { class: 'am-multi' }, f.values.map(function (v) { return el('li', { text: v }); })));
+    } else if (f.values.length) {
+      out.push(el('div', { text: f.values[0] }));
+      if (f.binary && f.key !== 'POPM') out.push(el('div', { class: 'am-src', text: fmtBytes(f.binary.size) + ' de datos' }));
+    } else if (f.binary) {
+      out.push(el('div', { text: fmtBytes(f.binary.size) + ' de datos' }));
+    }
+    return out;
+  }
+
+  function renderScan(rep) {
+    var kids = [el('p', { text: 'Textos conocidos encontrados al recorrer los ' + fmtBytes(rep.size) + ' del archivo, fuera de los bloques C2PA (que se leen aparte).' })];
+    if (!rep.scan.length) kids.push(el('p', { text: 'No se encontró ninguno.' }));
+    else kids.push(el('ul', { class: 'am-ev' }, rep.scan.map(function (h) {
+      return el('li', null, [chip(h.kind, h.kind === 'ia' ? 'Huella de IA' : 'Contexto'), el('span', { class: 'am-val', text: h.value }),
+        el('div', { class: 'am-src', text: 'Byte ' + h.offset.toLocaleString('es-ES') + ' · ' + h.where + (h.count > 1 ? ' · aparece ' + h.count + ' veces' : '') })]);
+    })));
+    return section('Escaneo de los bytes del archivo', kids);
+  }
+})();
+</script>
