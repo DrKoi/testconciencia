@@ -253,7 +253,7 @@ title: Limpiar metadatos de imágenes, documentos y audio — TestConCiencia
     return loaded[src];
   }
   function loadDeps(kind) {
-    if (kind === 'mp3' || kind === 'flac' || kind === 'm4a') return loadScript('metaclean-audio.js?v=1');
+    if (kind === 'mp3' || kind === 'flac' || kind === 'm4a') return loadScript('metaclean-audio.js?v=2');
     if (kind === 'rtf' || kind === 'svg' || kind === 'gif') return loadScript('metaclean-extra.js?v=1');
     if (kind === 'office') {
       return loadScript('fflate.min.js?v=1').then(function () { return loadScript('metaclean-office.js?v=1'); });
